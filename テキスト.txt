@@ -1,0 +1,413 @@
+-- サービス
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- 正しいキー
+local correctKey = "828945"
+
+-------------------------------------------------
+-- Humanoid取得
+-------------------------------------------------
+local humanoid
+local function updateHumanoid()
+    if player.Character then
+        humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    end
+end
+player.CharacterAdded:Connect(updateHumanoid)
+if player.Character then updateHumanoid() end
+
+-------------------------------------------------
+-- メインGUI
+-------------------------------------------------
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "MainGui"
+mainGui.ResetOnSpawn = false
+mainGui.Enabled = false
+mainGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0,500,0,300)
+mainFrame.Position = UDim2.new(0.5,-250,0.5,-150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+mainFrame.Parent = mainGui
+local mfCorner = Instance.new("UICorner", mainFrame)
+mfCorner.CornerRadius = UDim.new(0,6)
+
+-- ヘッダー
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1,0,0,35)
+header.BackgroundColor3 = Color3.fromRGB(40,40,60)
+header.Parent = mainFrame
+local hc = Instance.new("UICorner", header)
+hc.CornerRadius = UDim.new(0,6)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1,-80,1,0)
+titleLabel.Position = UDim2.new(0,5,0,0)
+titleLabel.Text = "Test Script"
+titleLabel.TextColor3 = Color3.fromRGB(255,255,255)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextScaled = true
+titleLabel.Parent = header
+
+-- 最小化ボタン
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0,35,1,0)
+minimizeButton.Position = UDim2.new(1,-80,0,0)
+minimizeButton.Text = "-"
+minimizeButton.TextScaled = true
+minimizeButton.BackgroundColor3 = Color3.fromRGB(60,60,90)
+minimizeButton.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeButton.Parent = header
+
+-- 閉じるボタン
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0,35,1,0)
+closeButton.Position = UDim2.new(1,-40,0,0)
+closeButton.Text = "X"
+closeButton.TextScaled = true
+closeButton.BackgroundColor3 = Color3.fromRGB(150,50,50)
+closeButton.TextColor3 = Color3.fromRGB(255,255,255)
+closeButton.Parent = header
+
+-------------------------------------------------
+-- タブフレーム
+-------------------------------------------------
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(0,100,1,-35)
+tabFrame.Position = UDim2.new(0,0,0,35)
+tabFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
+tabFrame.Parent = mainFrame
+
+local basicsTab = Instance.new("TextButton")
+basicsTab.Size = UDim2.new(1,0,0,40)
+basicsTab.Position = UDim2.new(0,0,0,0)
+basicsTab.Text = "Basics"
+basicsTab.TextScaled = true
+basicsTab.BackgroundColor3 = Color3.fromRGB(80,80,140)
+basicsTab.TextColor3 = Color3.fromRGB(255,255,255)
+basicsTab.Parent = tabFrame
+
+local espTab = Instance.new("TextButton")
+espTab.Size = UDim2.new(1,0,0,40)
+espTab.Position = UDim2.new(0,0,0,45)
+espTab.Text = "ESP"
+espTab.TextScaled = true
+espTab.BackgroundColor3 = Color3.fromRGB(60,60,120)
+espTab.TextColor3 = Color3.fromRGB(255,255,255)
+espTab.Parent = tabFrame
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1,-100,1,-35)
+contentFrame.Position = UDim2.new(0,100,0,35)
+contentFrame.BackgroundColor3 = Color3.fromRGB(20,20,40)
+contentFrame.Parent = mainFrame
+
+local basicsFrame = Instance.new("Frame")
+basicsFrame.Size = UDim2.new(1,0,1,0)
+basicsFrame.BackgroundTransparency = 1
+basicsFrame.Parent = contentFrame
+
+local espFrame = Instance.new("Frame")
+espFrame.Size = UDim2.new(1,0,1,0)
+espFrame.BackgroundTransparency = 1
+espFrame.Visible = false
+espFrame.Parent = contentFrame
+
+-------------------------------------------------
+-- Basics UI
+-------------------------------------------------
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(0,200,0,35)
+noclipButton.Position = UDim2.new(0,25,0,20)
+noclipButton.Text = "NoClip: OFF"
+noclipButton.TextScaled = true
+noclipButton.BackgroundColor3 = Color3.fromRGB(80,200,255)
+noclipButton.TextColor3 = Color3.fromRGB(255,255,255)
+noclipButton.Parent = basicsFrame
+
+local wsLabel = Instance.new("TextLabel")
+wsLabel.Size = UDim2.new(0,200,0,25)
+wsLabel.Position = UDim2.new(0,25,0,70)
+wsLabel.Text = "WalkSpeed (16-400)"
+wsLabel.BackgroundTransparency = 1
+wsLabel.TextScaled = true
+wsLabel.TextColor3 = Color3.fromRGB(255,255,255)
+wsLabel.Parent = basicsFrame
+
+local wsBox = Instance.new("TextBox")
+wsBox.Size = UDim2.new(0,200,0,25)
+wsBox.Position = UDim2.new(0,25,0,100)
+wsBox.Text = "16"
+wsBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+wsBox.TextColor3 = Color3.fromRGB(255,255,255)
+wsBox.TextScaled = true
+wsBox.Parent = basicsFrame
+
+local jpLabel = Instance.new("TextLabel")
+jpLabel.Size = UDim2.new(0,200,0,25)
+jpLabel.Position = UDim2.new(0,25,0,140)
+jpLabel.Text = "JumpPower (50-600)"
+jpLabel.BackgroundTransparency = 1
+jpLabel.TextScaled = true
+jpLabel.TextColor3 = Color3.fromRGB(255,255,255)
+jpLabel.Parent = basicsFrame
+
+local jpBox = Instance.new("TextBox")
+jpBox.Size = UDim2.new(0,200,0,25)
+jpBox.Position = UDim2.new(0,25,0,170)
+jpBox.Text = "50"
+jpBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+jpBox.TextColor3 = Color3.fromRGB(255,255,255)
+jpBox.TextScaled = true
+jpBox.Parent = basicsFrame
+
+local ijButton = Instance.new("TextButton")
+ijButton.Size = UDim2.new(0,200,0,35)
+ijButton.Position = UDim2.new(0,25,0,210)
+ijButton.Text = "Infinite Jump: OFF"
+ijButton.TextScaled = true
+ijButton.BackgroundColor3 = Color3.fromRGB(80,200,255)
+ijButton.TextColor3 = Color3.fromRGB(255,255,255)
+ijButton.Parent = basicsFrame
+
+-------------------------------------------------
+-- タブ切替
+-------------------------------------------------
+basicsTab.MouseButton1Click:Connect(function()
+	basicsFrame.Visible = true
+	espFrame.Visible = false
+end)
+espTab.MouseButton1Click:Connect(function()
+	basicsFrame.Visible = false
+	espFrame.Visible = true
+end)
+
+-------------------------------------------------
+-- 縮小ボタン
+-------------------------------------------------
+local minimized = false
+local originalSize = mainFrame.Size
+minimizeButton.MouseButton1Click:Connect(function()
+	if not minimized then
+		mainFrame:TweenSize(UDim2.new(0,180,0,60),Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.3,true)
+		tabFrame.Visible = false
+		basicsFrame.Visible = false
+		espFrame.Visible = false
+		closeButton.Visible = false
+		minimizeButton.Text = "+"
+		-- 縮小後プラスを少し左にずらす
+		minimizeButton.Position = UDim2.new(1,-35,0,0)
+		minimized = true
+	else
+		mainFrame:TweenSize(originalSize,Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.3,true)
+		tabFrame.Visible = true
+		basicsFrame.Visible = true
+		closeButton.Visible = true
+		minimizeButton.Text = "-"
+		-- 元の位置に戻す
+		minimizeButton.Position = UDim2.new(1,-80,0,0)
+		minimized = false
+	end
+end)
+
+-------------------------------------------------
+-- ドラッグ（マウス・タッチ）
+-------------------------------------------------
+do
+	local dragging = false
+	local dragStart, startPos
+	local function update(input)
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+
+	header.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = mainFrame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	header.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			update(input)
+		end
+	end)
+end
+
+-------------------------------------------------
+-- WalkSpeed / JumpPower / InfiniteJump / NoClip
+-------------------------------------------------
+wsBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed and humanoid then
+		local value = tonumber(wsBox.Text)
+		if value and value >=16 and value <=400 then
+			humanoid.WalkSpeed = value
+		else
+			wsBox.Text = "16"
+			humanoid.WalkSpeed = 16
+		end
+	end
+end)
+
+jpBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed and humanoid then
+		local value = tonumber(jpBox.Text)
+		if value and value >=50 and value <=600 then
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = value
+		else
+			jpBox.Text = "50"
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = 50
+		end
+	end
+end)
+
+local infiniteJumpEnabled = false
+ijButton.MouseButton1Click:Connect(function()
+	infiniteJumpEnabled = not infiniteJumpEnabled
+	ijButton.Text = infiniteJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
+end)
+
+UserInputService.JumpRequest:Connect(function()
+	if infiniteJumpEnabled and humanoid then
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+local noclipEnabled = false
+local noclipConnection
+noclipButton.MouseButton1Click:Connect(function()
+	noclipEnabled = not noclipEnabled
+	noclipButton.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
+	if noclipEnabled then
+		noclipConnection = RunService.Stepped:Connect(function()
+			if player.Character then
+				for _, part in pairs(player.Character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = false
+					end
+				end
+			end
+		end)
+	elseif noclipConnection then
+		noclipConnection:Disconnect()
+	end
+end)
+
+-------------------------------------------------
+-- パスコード画面
+-------------------------------------------------
+local keyGui = Instance.new("ScreenGui")
+keyGui.Name = "KeyGui"
+keyGui.ResetOnSpawn = false
+keyGui.Parent = playerGui
+
+local kFrame = Instance.new("Frame")
+kFrame.Size = UDim2.new(0,300,0,150)
+kFrame.Position = UDim2.new(0.5,-150,0.5,-75)
+kFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+kFrame.Parent = keyGui
+local kCorner = Instance.new("UICorner", kFrame)
+kCorner.CornerRadius = UDim.new(0,6)
+
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(1,-20,0,30)
+textBox.Position = UDim2.new(0,10,0,40)
+textBox.PlaceholderText = "Enter Key"
+textBox.Text = ""
+textBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+textBox.TextColor3 = Color3.fromRGB(255,255,255)
+textBox.TextScaled = true
+textBox.Parent = kFrame
+
+local enterButton = Instance.new("TextButton")
+enterButton.Size = UDim2.new(1,-20,0,35)
+enterButton.Position = UDim2.new(0,10,0,80)
+enterButton.Text = "Enter"
+enterButton.BackgroundColor3 = Color3.fromRGB(80,200,255)
+enterButton.TextColor3 = Color3.fromRGB(255,255,255)
+enterButton.TextScaled = true
+enterButton.Parent = kFrame
+
+local errorText = Instance.new("TextLabel")
+errorText.Size = UDim2.new(1,0,0,25)
+errorText.Position = UDim2.new(0,0,0,120)
+errorText.TextColor3 = Color3.fromRGB(255,0,0)
+errorText.BackgroundTransparency = 1
+errorText.TextScaled = true
+errorText.Text = ""
+errorText.Parent = kFrame
+
+enterButton.MouseButton1Click:Connect(function()
+	if textBox.Text == correctKey then
+		mainGui.Enabled = true
+		keyGui:Destroy()
+	else
+		errorText.Text = "Wrong Key!"
+	end
+end)
+
+-------------------------------------------------
+-- 閉じる確認画面
+-------------------------------------------------
+closeButton.MouseButton1Click:Connect(function()
+	mainFrame.Visible = false
+	local confirmFrame = Instance.new("Frame", mainGui)
+	confirmFrame.Size = UDim2.new(0,300,0,150)
+	confirmFrame.Position = UDim2.new(0.5,-150,0.5,-75)
+	confirmFrame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+	local cCorner = Instance.new("UICorner", confirmFrame)
+	cCorner.CornerRadius = UDim.new(0,6)
+
+	local closeBtn = Instance.new("TextButton", confirmFrame)
+	closeBtn.Size = UDim2.new(0,200,0,35)
+	closeBtn.Position = UDim2.new(0.5,-100,0.3, -20)
+	closeBtn.Text = "Close Window"
+	closeBtn.BackgroundColor3 = Color3.fromRGB(80,200,255)
+	closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+	closeBtn.TextScaled = true
+
+	local cancelBtn = Instance.new("TextButton", confirmFrame)
+	cancelBtn.Size = UDim2.new(0,200,0,35)
+	cancelBtn.Position = UDim2.new(0.5,-100,0.7,-20)
+	cancelBtn.Text = "Cancel"
+	cancelBtn.BackgroundColor3 = Color3.fromRGB(80,200,255)
+	cancelBtn.TextColor3 = Color3.fromRGB(255,255,255)
+	cancelBtn.TextScaled = true
+
+	local orLabel = Instance.new("TextLabel", confirmFrame)
+	orLabel.Size = UDim2.new(0,50,0,30)
+	orLabel.Position = UDim2.new(0.5,-25,0.5,-15)
+	orLabel.Text = "OR"
+	orLabel.BackgroundTransparency = 1
+	orLabel.TextColor3 = Color3.fromRGB(200,200,200)
+	orLabel.TextScaled = true
+
+	closeBtn.MouseButton1Click:Connect(function()
+		mainGui.Enabled = false
+		confirmFrame:Destroy()
+	end)
+
+	cancelBtn.MouseButton1Click:Connect(function()
+		mainFrame.Visible = true
+		confirmFrame:Destroy()
+	end)
+end)
