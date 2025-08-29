@@ -158,62 +158,185 @@ espFrame.Visible = false
 espFrame.Parent = contentFrame
 
 -------------------------------------------------
--- Basics UI配置
+-- タブ切替 + 現在のタブ状態保持
 -------------------------------------------------
-local noclipButton = Instance.new("TextButton")
+local currentTab = "Basics"
+
+basicsTab.MouseButton1Click:Connect(function()
+    basicsFrame.Visible = true
+    espFrame.Visible = false
+    currentTab = "Basics"
+end)
+
+espTab.MouseButton1Click:Connect(function()
+    basicsFrame.Visible = false
+    espFrame.Visible = true
+    currentTab = "ESP"
+end)
+
+-------------------------------------------------
+-- 縮小/拡大
+-------------------------------------------------
+local minimized = false
+local originalSize = mainFrame.Size
+
+local function setMinimized(min)
+    minimized = min
+    for _,child in pairs(tabFrame:GetChildren()) do
+        child.Visible = not min
+    end
+    if not min then
+        basicsFrame.Visible = (currentTab == "Basics")
+        espFrame.Visible = (currentTab == "ESP")
+    else
+        basicsFrame.Visible = false
+        espFrame.Visible = false
+    end
+    minimizeButton.Text = min and "+" or "-"
+end
+
+minimizeButton.MouseButton1Click:Connect(function()
+    if not minimized then
+        setMinimized(true)
+        mainFrame:TweenSize(UDim2.new(0,200,0,40), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
+    else
+        setMinimized(false)
+        mainFrame:TweenSize(originalSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
+    end
+end)
+
+-------------------------------------------------
+-- パスコード送信修正版（Enterキー対応）
+-------------------------------------------------
+local function submitKey()
+    if kBox.Text == correctKey then
+        mainGui.Enabled = true
+        keyGui:Destroy()
+    else
+        kError.Text = "Wrong Key!"
+    end
+end
+
+kButton.MouseButton1Click:Connect(submitKey)
+kBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        submitKey()
+    end
+end)
+
+-------------------------------------------------
+-- Basics機能
+-------------------------------------------------
+local noclipButton = Instance.new("TextButton", basicsFrame)
 noclipButton.Size = UDim2.new(0,180,0,35)
 noclipButton.Position = UDim2.new(0,20,0,20)
 noclipButton.Text = "NoClip: OFF"
 noclipButton.TextScaled = true
 noclipButton.BackgroundColor3 = Color3.fromRGB(255,0,0)
 noclipButton.TextColor3 = Color3.fromRGB(255,255,255)
-noclipButton.Parent = basicsFrame
 
-local wsLabel = Instance.new("TextLabel")
+local wsLabel = Instance.new("TextLabel", basicsFrame)
 wsLabel.Size = UDim2.new(0,180,0,25)
 wsLabel.Position = UDim2.new(0,20,0,70)
 wsLabel.Text = "WalkSpeed (16-400)"
 wsLabel.BackgroundTransparency = 1
 wsLabel.TextScaled = true
 wsLabel.TextColor3 = Color3.fromRGB(255,255,255)
-wsLabel.Parent = basicsFrame
 
-local wsBox = Instance.new("TextBox")
+local wsBox = Instance.new("TextBox", basicsFrame)
 wsBox.Size = UDim2.new(0,180,0,25)
 wsBox.Position = UDim2.new(0,20,0,100)
 wsBox.Text = "16"
 wsBox.BackgroundColor3 = Color3.fromRGB(255,255,255)
 wsBox.TextScaled = true
-wsBox.Parent = basicsFrame
 
-local jpLabel = Instance.new("TextLabel")
+local jpLabel = Instance.new("TextLabel", basicsFrame)
 jpLabel.Size = UDim2.new(0,180,0,25)
 jpLabel.Position = UDim2.new(0,20,0,135)
 jpLabel.Text = "JumpPower (50-600)"
 jpLabel.BackgroundTransparency = 1
 jpLabel.TextScaled = true
 jpLabel.TextColor3 = Color3.fromRGB(255,255,255)
-jpLabel.Parent = basicsFrame
 
-local jpBox = Instance.new("TextBox")
+local jpBox = Instance.new("TextBox", basicsFrame)
 jpBox.Size = UDim2.new(0,180,0,25)
 jpBox.Position = UDim2.new(0,20,0,165)
 jpBox.Text = "50"
 jpBox.BackgroundColor3 = Color3.fromRGB(255,255,255)
 jpBox.TextScaled = true
-jpBox.Parent = basicsFrame
 
-local ijButton = Instance.new("TextButton")
+local ijButton = Instance.new("TextButton", basicsFrame)
 ijButton.Size = UDim2.new(0,180,0,35)
 ijButton.Position = UDim2.new(0,20,0,200)
 ijButton.Text = "Infinite Jump: OFF"
 ijButton.TextScaled = true
 ijButton.BackgroundColor3 = Color3.fromRGB(255,0,0)
 ijButton.TextColor3 = Color3.fromRGB(255,255,255)
-ijButton.Parent = basicsFrame
+
+local noclipEnabled = false
+local infiniteJumpEnabled = false
+local noclipConnection
+
+local function applyNoClip()
+    if noclipConnection then noclipConnection:Disconnect() end
+    noclipConnection = RunService.Stepped:Connect(function()
+        if noclipEnabled and player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end)
+end
+
+noclipButton.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipButton.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
+    noclipButton.BackgroundColor3 = noclipEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+    applyNoClip()
+end)
+
+ijButton.MouseButton1Click:Connect(function()
+    infiniteJumpEnabled = not infiniteJumpEnabled
+    ijButton.Text = infiniteJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
+    ijButton.BackgroundColor3 = infiniteJumpEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+wsBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and humanoid then
+        local value = tonumber(wsBox.Text)
+        if value and value>=16 and value<=400 then
+            humanoid.WalkSpeed = value
+        else
+            wsBox.Text = "16"
+            humanoid.WalkSpeed = 16
+        end
+    end
+end)
+
+jpBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and humanoid then
+        local value = tonumber(jpBox.Text)
+        if value and value>=50 and value<=600 then
+            humanoid.UseJumpPower = true
+            humanoid.JumpPower = value
+        else
+            jpBox.Text = "50"
+            humanoid.UseJumpPower = true
+            humanoid.JumpPower = 50
+        end
+    end
+end)
 
 -------------------------------------------------
--- ESP構築
+-- ESP機能
 -------------------------------------------------
 local espList = {}
 local espEnabled = {}
@@ -310,47 +433,10 @@ end
 Players.PlayerAdded:Connect(refreshESPList)
 Players.PlayerRemoving:Connect(refreshESPList)
 refreshESPList()
+updateESP()
 
 -------------------------------------------------
--- タブ切替
--------------------------------------------------
-basicsTab.MouseButton1Click:Connect(function()
-    basicsFrame.Visible = true
-    espFrame.Visible = false
-end)
-espTab.MouseButton1Click:Connect(function()
-    basicsFrame.Visible = false
-    espFrame.Visible = true
-end)
-
--------------------------------------------------
--- 縮小/拡大
--------------------------------------------------
-local minimized = false
-local originalSize = mainFrame.Size
-local function setMinimized(min)
-    minimized = min
-    for _,child in pairs(contentFrame:GetChildren()) do
-        child.Visible = not min
-    end
-    for _,child in pairs(tabFrame:GetChildren()) do
-        child.Visible = not min
-    end
-    minimizeButton.Text = min and "+" or "-"
-end
-
-minimizeButton.MouseButton1Click:Connect(function()
-    if not minimized then
-        setMinimized(true)
-        mainFrame:TweenSize(UDim2.new(0,200,0,40),Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.3,true)
-    else
-        setMinimized(false)
-        mainFrame:TweenSize(originalSize,Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.3,true)
-    end
-end)
-
--------------------------------------------------
--- ドラッグ
+-- ドラッグ機能
 -------------------------------------------------
 local dragging = false
 local dragStart, startPos
@@ -378,71 +464,6 @@ end)
 header.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         updatePosition(input)
-    end
-end)
-
--------------------------------------------------
--- Basics機能
--------------------------------------------------
-local noclipEnabled = false
-local infiniteJumpEnabled = false
-local noclipConnection
-
-local function applyNoClip()
-    if noclipConnection then noclipConnection:Disconnect() end
-    noclipConnection = RunService.Stepped:Connect(function()
-        if noclipEnabled and player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end)
-end
-
-noclipButton.MouseButton1Click:Connect(function()
-    noclipEnabled = not noclipEnabled
-    noclipButton.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
-    noclipButton.BackgroundColor3 = noclipEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
-    applyNoClip()
-end)
-
-ijButton.MouseButton1Click:Connect(function()
-    infiniteJumpEnabled = not infiniteJumpEnabled
-    ijButton.Text = infiniteJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
-    ijButton.BackgroundColor3 = infiniteJumpEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
-end)
-
-UserInputService.JumpRequest:Connect(function()
-    if infiniteJumpEnabled and humanoid then
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
-wsBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed and humanoid then
-        local value = tonumber(wsBox.Text)
-        if value and value>=16 and value<=400 then
-            humanoid.WalkSpeed = value
-        else
-            wsBox.Text = "16"
-            humanoid.WalkSpeed = 16
-        end
-    end
-end)
-
-jpBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed and humanoid then
-        local value = tonumber(jpBox.Text)
-        if value and value>=50 and value<=600 then
-            humanoid.UseJumpPower = true
-            humanoid.JumpPower = value
-        else
-            jpBox.Text = "50"
-            humanoid.UseJumpPower = true
-            humanoid.JumpPower = 50
-        end
     end
 end)
 
@@ -490,23 +511,4 @@ closeButton.MouseButton1Click:Connect(function()
         confirmFrame:Destroy()
         mainFrame.Visible = true
     end)
-end)
-
--------------------------------------------------
--- パスコード入力反応
--------------------------------------------------
-kButton.MouseButton1Click:Connect(function()
-    if kBox.Text == correctKey then
-        mainGui.Enabled = true
-        keyGui:Destroy()
-    else
-        kError.Text = "Wrong Key!"
-    end
-end)
-
-kBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        kButton:CaptureFocus()
-        kButton.MouseButton1Click:Connect()
-    end
 end)
