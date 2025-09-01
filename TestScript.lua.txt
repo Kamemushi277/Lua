@@ -1,4 +1,3 @@
--- TestScript 完全版
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -81,6 +80,14 @@ espTab.TextScaled = true
 espTab.BackgroundColor3 = Color3.fromRGB(60,60,120)
 espTab.TextColor3 = Color3.fromRGB(255,255,255)
 
+local teleportTab = Instance.new("TextButton", tabFrame)
+teleportTab.Size = UDim2.new(1,0,0,40)
+teleportTab.Position = UDim2.new(0,0,0,90)
+teleportTab.Text = "Teleport"
+teleportTab.TextScaled = true
+teleportTab.BackgroundColor3 = Color3.fromRGB(50,80,130)
+teleportTab.TextColor3 = Color3.fromRGB(255,255,255)
+
 local contentFrame = Instance.new("Frame", mainFrame)
 contentFrame.Size = UDim2.new(1,-100,1,-35)
 contentFrame.Position = UDim2.new(0,100,0,35)
@@ -95,16 +102,29 @@ espFrame.Size = UDim2.new(1,0,1,0)
 espFrame.BackgroundTransparency = 1
 espFrame.Visible = false
 
+local teleportFrame = Instance.new("Frame", contentFrame)
+teleportFrame.Size = UDim2.new(1,0,1,0)
+teleportFrame.BackgroundTransparency = 1
+teleportFrame.Visible = false
+
 local currentTab = "Basics"
 basicsTab.MouseButton1Click:Connect(function()
     basicsFrame.Visible = true
     espFrame.Visible = false
+    teleportFrame.Visible = false
     currentTab = "Basics"
 end)
 espTab.MouseButton1Click:Connect(function()
     basicsFrame.Visible = false
     espFrame.Visible = true
+    teleportFrame.Visible = false
     currentTab = "ESP"
+end)
+teleportTab.MouseButton1Click:Connect(function()
+    basicsFrame.Visible = false
+    espFrame.Visible = false
+    teleportFrame.Visible = true
+    currentTab = "Teleport"
 end)
 
 -------------------------------------------------
@@ -119,6 +139,7 @@ local function setMinimized(min)
     end
     basicsFrame.Visible = not min and currentTab=="Basics"
     espFrame.Visible = not min and currentTab=="ESP"
+    teleportFrame.Visible = not min and currentTab=="Teleport"
 
     if min then
         minimizeButton.Text = "+"
@@ -470,6 +491,15 @@ Players.PlayerRemoving:Connect(function(plr)
             frame:Destroy()
         end
     end
+    -- フレームを再配置して隙間を埋める
+    local yOffset = 0
+    for _,frame in pairs(espUIList:GetChildren()) do
+        if frame:IsA("Frame") then
+            frame.Position = UDim2.new(0,10,0,yOffset)
+            yOffset = yOffset + 35
+        end
+    end
+    espUIList.CanvasSize = UDim2.new(0,0,0,yOffset)
 end)
 
 updateESP()
