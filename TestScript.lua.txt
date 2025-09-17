@@ -3,10 +3,8 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
-local correctKey = "828945"
 local humanoid
 
--- 設定を保存するテーブル
 local settings = {
     NoClip = false,
     WalkSpeed = 16,
@@ -14,7 +12,6 @@ local settings = {
     InfiniteJump = false
 }
 
--- Humanoid取得と設定の再適用
 local function updateHumanoid()
     if player.Character then
         humanoid = player.Character:FindFirstChildOfClass("Humanoid")
@@ -25,275 +22,14 @@ local function updateHumanoid()
             if settings.NoClip then
                 applyNoClip()
             end
-        else
-            warn("ヒューマノイドが見つかりません。")
         end
     end
 end
 player.CharacterAdded:Connect(updateHumanoid)
 updateHumanoid()
 
--------------------------------------------------
--- メインGUI
--------------------------------------------------
-local mainGui = Instance.new("ScreenGui", playerGui)
-mainGui.Name = "TestScript"
-mainGui.ResetOnSpawn = false
-mainGui.Enabled = false
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local mainFrame = Instance.new("Frame", mainGui)
-mainFrame.Size = UDim2.new(0, 500, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-mainFrame.BackgroundTransparency = 0.3
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
-
--- Header
-local header = Instance.new("Frame", mainFrame)
-header.Size = UDim2.new(1, 0, 0, 35)
-header.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-header.BackgroundTransparency = 0.3
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 6)
-
-local titleLabel = Instance.new("TextLabel", header)
-titleLabel.Size = UDim2.new(1, -80, 1, 0)
-titleLabel.Position = UDim2.new(0, 5, 0, 0)
-titleLabel.Text = "Test Script"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.BackgroundTransparency = 1
-titleLabel.TextTransparency = 0.2
-titleLabel.TextScaled = true
-
-local minimizeButton = Instance.new("TextButton", header)
-minimizeButton.Size = UDim2.new(0, 35, 1, 0)
-minimizeButton.Position = UDim2.new(1, -80, 0, 0)
-minimizeButton.Text = "-"
-minimizeButton.TextScaled = true
-minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-minimizeButton.BackgroundTransparency = 0.3
-minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeButton.TextTransparency = 0.2
-
-local closeButton = Instance.new("TextButton", header)
-closeButton.Size = UDim2.new(0, 35, 1, 0)
-closeButton.Position = UDim2.new(1, -40, 0, 0)
-closeButton.Text = "X"
-closeButton.TextScaled = true
-closeButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-closeButton.BackgroundTransparency = 0.3
-closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.TextTransparency = 0.2
-
--- Tabs
-local tabFrame = Instance.new("Frame", mainFrame)
-tabFrame.Size = UDim2.new(0, 100, 1, -35)
-tabFrame.Position = UDim2.new(0, 0, 0, 35)
-tabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-tabFrame.BackgroundTransparency = 0.3
-
-local basicsTab = Instance.new("TextButton", tabFrame)
-basicsTab.Size = UDim2.new(1, 0, 0, 40)
-basicsTab.Text = "Basics"
-basicsTab.TextScaled = true
-basicsTab.BackgroundColor3 = Color3.fromRGB(80, 80, 140)
-basicsTab.BackgroundTransparency = 0.3
-basicsTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-basicsTab.TextTransparency = 0.2
-
-local espTab = Instance.new("TextButton", tabFrame)
-espTab.Size = UDim2.new(1, 0, 0, 40)
-espTab.Position = UDim2.new(0, 0, 0, 45)
-espTab.Text = "ESP"
-espTab.TextScaled = true
-espTab.BackgroundColor3 = Color3.fromRGB(60, 60, 120)
-espTab.BackgroundTransparency = 0.3
-espTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-espTab.TextTransparency = 0.2
-
-local teleportTab = Instance.new("TextButton", tabFrame)
-teleportTab.Size = UDim2.new(1, 0, 0, 40)
-teleportTab.Position = UDim2.new(0, 0, 0, 90)
-teleportTab.Text = "Teleport"
-teleportTab.TextScaled = true
-teleportTab.BackgroundColor3 = Color3.fromRGB(50, 80, 130)
-teleportTab.BackgroundTransparency = 0.3
-teleportTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-teleportTab.TextTransparency = 0.2
-
-local contentFrame = Instance.new("Frame", mainFrame)
-contentFrame.Size = UDim2.new(1, -100, 1, -35)
-contentFrame.Position = UDim2.new(0, 100, 0, 35)
-contentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
-contentFrame.BackgroundTransparency = 0.3
-
-local basicsFrame = Instance.new("Frame", contentFrame)
-basicsFrame.Size = UDim2.new(1, 0, 1, 0)
-basicsFrame.BackgroundTransparency = 1
-
-local espFrame = Instance.new("Frame", contentFrame)
-espFrame.Size = UDim2.new(1, 0, 1, 0)
-espFrame.BackgroundTransparency = 1
-espFrame.Visible = false
-
-local teleportFrame = Instance.new("Frame", contentFrame)
-teleportFrame.Size = UDim2.new(1, 0, 1, 0)
-teleportFrame.BackgroundTransparency = 1
-teleportFrame.Visible = false
-
-local currentTab = "Basics"
-basicsTab.MouseButton1Click:Connect(function()
-    basicsFrame.Visible = true
-    espFrame.Visible = false
-    teleportFrame.Visible = false
-    currentTab = "Basics"
-end)
-espTab.MouseButton1Click:Connect(function()
-    basicsFrame.Visible = false
-    espFrame.Visible = true
-    teleportFrame.Visible = false
-    currentTab = "ESP"
-end)
-teleportTab.MouseButton1Click:Connect(function()
-    basicsFrame.Visible = false
-    espFrame.Visible = false
-    teleportFrame.Visible = true
-    currentTab = "Teleport"
-end)
-
--------------------------------------------------
--- 縮小/拡大
--------------------------------------------------
-local minimized = false
-local originalSize = mainFrame.Size
-local function setMinimized(min)
-    minimized = min
-    for _, child in pairs(tabFrame:GetChildren()) do
-        child.Visible = not min
-    end
-    basicsFrame.Visible = not min and currentTab == "Basics"
-    espFrame.Visible = not min and currentTab == "ESP"
-    teleportFrame.Visible = not min and currentTab == "Teleport"
-
-    if min then
-        local gradient = Instance.new("UIGradient", mainFrame)
-        gradient.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(173, 216, 230)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(135, 206, 235))
-        }
-        gradient.Rotation = 0
-
-        minimizeButton.Text = "+"
-        closeButton.Visible = false
-        titleLabel.Text = "TestScript"
-        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        titleLabel.TextScaled = true
-        titleLabel.Size = UDim2.new(0.8, 0, 1, 0)
-        titleLabel.Position = UDim2.new(0, 10, 0, 0)
-        minimizeButton.Size = UDim2.new(0, 30, 1, 0)
-        minimizeButton.Position = UDim2.new(1, -35, 0, 0)
-        minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        minimizeButton.BackgroundTransparency = 1
-        mainFrame.BackgroundTransparency = 0
-        mainFrame:TweenSize(UDim2.new(0, 250, 0, 50), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
-        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
-    else
-        if mainFrame:FindFirstChild("UIGradient") then
-            mainFrame:FindFirstChild("UIGradient"):Destroy()
-        end
-        minimizeButton.Text = "-"
-        closeButton.Visible = true
-        titleLabel.Text = "Test Script"
-        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        titleLabel.TextScaled = true
-        titleLabel.Size = UDim2.new(1, -80, 1, 0)
-        minimizeButton.Position = UDim2.new(1, -80, 0, 0)
-        minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        minimizeButton.BackgroundTransparency = 0.3
-        mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-        mainFrame.BackgroundTransparency = 0.3
-        mainFrame:TweenSize(originalSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
-        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
-    end
-end
-minimizeButton.MouseButton1Click:Connect(function()
-    setMinimized(not minimized)
-end)
-
--------------------------------------------------
--- Close確認
--------------------------------------------------
-closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-    local confirmFrame = Instance.new("Frame", mainGui)
-    confirmFrame.Size = UDim2.new(0, 250, 0, 150)
-    confirmFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
-    confirmFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
-    confirmFrame.BackgroundTransparency = 0.3
-    Instance.new("UICorner", confirmFrame).CornerRadius = UDim.new(0, 6)
-
-    local closeBtn = Instance.new("TextButton", confirmFrame)
-    closeBtn.Size = UDim2.new(1, -20, 0, 50)
-    closeBtn.Position = UDim2.new(0, 10, 0, 20)
-    closeBtn.Text = "Close Window"
-    closeBtn.TextScaled = true
-    closeBtn.BackgroundColor3 = Color3.fromRGB(80, 200, 255)
-    closeBtn.BackgroundTransparency = 0.3
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextTransparency = 0.2
-    closeBtn.MouseButton1Click:Connect(function()
-        confirmFrame:Destroy()
-        mainGui.Enabled = false
-    end)
-
-    local orLabel = Instance.new("TextLabel", confirmFrame)
-    orLabel.Size = UDim2.new(1, 0, 0, 30)
-    orLabel.Position = UDim2.new(0, 0, 0.45, 0)
-    orLabel.Text = "or"
-    orLabel.TextScaled = true
-    orLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    orLabel.BackgroundTransparency = 1
-    orLabel.TextTransparency = 0.2
-
-    local cancelBtn = Instance.new("TextButton", confirmFrame)
-    cancelBtn.Size = UDim2.new(1, -20, 0, 50)
-    cancelBtn.Position = UDim2.new(0, 10, 0, 80)
-    cancelBtn.Text = "Cancel"
-    cancelBtn.TextScaled = true
-    cancelBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-    cancelBtn.BackgroundTransparency = 0.3
-    cancelBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    cancelBtn.TextTransparency = 0.2
-    cancelBtn.MouseButton1Click:Connect(function()
-        confirmFrame:Destroy()
-        mainFrame.Visible = true
-    end)
-end)
-
--------------------------------------------------
--- GUIドラッグ
--------------------------------------------------
-local dragging = false
-local dragStart, startPos
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-header.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--------------------------------------------------
--- パスワード画面
--------------------------------------------------
 local keyGui = Instance.new("ScreenGui", playerGui)
 keyGui.Name = "KeyGui"
 keyGui.ResetOnSpawn = false
@@ -334,12 +70,24 @@ keyError.TextScaled = true
 keyError.Text = ""
 keyError.TextTransparency = 0.2
 
+local correctKey = "828945"
 local function submitKey()
     if keyBox.Text == correctKey then
-        mainGui.Enabled = true
         keyGui:Destroy()
+        print("キー認証成功")
+        Rayfield:Notify({
+            Title = "キー認証",
+            Content = "認証成功！GUIを表示します。",
+            Duration = 3
+        })
+        initializeMainGui()
     else
         keyError.Text = "Wrong Key!"
+        Rayfield:Notify({
+            Title = "エラー",
+            Content = "間違ったキーを入力しました",
+            Duration = 3
+        })
     end
 end
 keyButton.MouseButton1Click:Connect(submitKey)
@@ -347,374 +95,305 @@ keyBox.FocusLost:Connect(function(enterPressed)
     if enterPressed then submitKey() end
 end)
 
--------------------------------------------------
--- Basics機能
--------------------------------------------------
-local noclipButton = Instance.new("TextButton", basicsFrame)
-noclipButton.Size = UDim2.new(0, 180, 0, 35)
-noclipButton.Position = UDim2.new(0, 20, 0, 20)
-noclipButton.Text = "NoClip: OFF"
-noclipButton.TextScaled = true
-noclipButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-noclipButton.BackgroundTransparency = 0.3
-noclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-noclipButton.TextTransparency = 0.2
+function initializeMainGui()
+    local Window = Rayfield:CreateWindow({
+        Name = "Test Script",
+        LoadingTitle = "Test Script",
+        LoadingSubtitle = "by [Your Name]",
+        ConfigurationSaving = {
+            Enabled = true,
+            FolderName = "TestScriptConfig",
+            FileName = "Settings"
+        },
+        KeySystem = false
+    })
 
-local wsLabel = Instance.new("TextLabel", basicsFrame)
-wsLabel.Size = UDim2.new(0, 180, 0, 25)
-wsLabel.Position = UDim2.new(0, 20, 0, 70)
-wsLabel.Text = "WalkSpeed (16-400)"
-wsLabel.BackgroundTransparency = 1
-wsLabel.TextScaled = true
-wsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-wsLabel.TextTransparency = 0.2
+    local BasicsTab = Window:CreateTab("Basics", nil)
 
-local wsBox = Instance.new("TextBox", basicsFrame)
-wsBox.Size = UDim2.new(0, 180, 0, 25)
-wsBox.Position = UDim2.new(0, 20, 0, 100)
-wsBox.Text = tostring(settings.WalkSpeed)
-wsBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-wsBox.BackgroundTransparency = 0.3
-wsBox.TextScaled = true
-wsBox.TextTransparency = 0.2
-
-local jpLabel = Instance.new("TextLabel", basicsFrame)
-jpLabel.Size = UDim2.new(0, 180, 0, 25)
-jpLabel.Position = UDim2.new(0, 20, 0, 135)
-jpLabel.Text = "JumpPower (50-600)"
-jpLabel.BackgroundTransparency = 1
-jpLabel.TextScaled = true
-jpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-jpLabel.TextTransparency = 0.2
-
-local jpBox = Instance.new("TextBox", basicsFrame)
-jpBox.Size = UDim2.new(0, 180, 0, 25)
-jpBox.Position = UDim2.new(0, 20, 0, 165)
-jpBox.Text = tostring(settings.JumpPower)
-jpBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-jpBox.BackgroundTransparency = 0.3
-jpBox.TextScaled = true
-jpBox.TextTransparency = 0.2
-
-local ijButton = Instance.new("TextButton", basicsFrame)
-ijButton.Size = UDim2.new(0, 180, 0, 35)
-ijButton.Position = UDim2.new(0, 20, 0, 200)
-ijButton.Text = "Infinite Jump: OFF"
-ijButton.TextScaled = true
-ijButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-ijButton.BackgroundTransparency = 0.3
-ijButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ijButton.TextTransparency = 0.2
-
-local noclipEnabled = false
-local infiniteJumpEnabled = false
-local noclipConnection
-local noclipParts = {}
-
-local function applyNoClip()
-    if noclipConnection then noclipConnection:Disconnect() end
-    if noclipEnabled and player.Character then
-        noclipParts = {}
-        for _, part in pairs(player.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-                table.insert(noclipParts, part)
-            end
-        end
-        noclipConnection = RunService.Stepped:Connect(function()
-            if noclipEnabled and player.Character then
-                for _, part in pairs(noclipParts) do
-                    if part.Parent then
-                        part.CanCollide = false
-                    end
-                end
-            else
-                noclipConnection:Disconnect()
-            end
-        end)
-    end
-end
-
-noclipButton.MouseButton1Click:Connect(function()
-    noclipEnabled = not noclipEnabled
-    settings.NoClip = noclipEnabled
-    noclipButton.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
-    noclipButton.BackgroundColor3 = noclipEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    applyNoClip()
-end)
-
-ijButton.MouseButton1Click:Connect(function()
-    infiniteJumpEnabled = not infiniteJumpEnabled
-    settings.InfiniteJump = infiniteJumpEnabled
-    ijButton.Text = infiniteJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
-    ijButton.BackgroundColor3 = infiniteJumpEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-end)
-
-UserInputService.JumpRequest:Connect(function()
-    if infiniteJumpEnabled and humanoid then
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
-wsBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed and humanoid then
-        local value = tonumber(wsBox.Text)
-        if value and value >= 16 and value <= 400 then
-            humanoid.WalkSpeed = value
-            settings.WalkSpeed = value
-        else
-            wsBox.Text = tostring(settings.WalkSpeed)
-            humanoid.WalkSpeed = settings.WalkSpeed
-        end
-    end
-end)
-
-jpBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed and humanoid then
-        local value = tonumber(jpBox.Text)
-        if value and value >= 50 and value <= 600 then
-            humanoid.UseJumpPower = true
-            humanoid.JumpPower = value
-            settings.JumpPower = value
-        else
-            jpBox.Text = tostring(settings.JumpPower)
-            humanoid.UseJumpPower = true
-            humanoid.JumpPower = settings.JumpPower
-        end
-    end
-end)
-
--------------------------------------------------
--- ESP機能
--------------------------------------------------
-local espList = {}
-local espEnabled = {}
-local espConnection
-
-local espUIList = Instance.new("ScrollingFrame", espFrame)
-espUIList.Size = UDim2.new(1, 0, 1, 0)
-espUIList.CanvasSize = UDim2.new(0, 0, 0, 0)
-espUIList.BackgroundTransparency = 1
-espUIList.ScrollBarThickness = 6
-
-local function updateESP()
-    if espConnection then espConnection:Disconnect() end
-    espConnection = RunService.Heartbeat:Connect(function()
-        task.wait(0.1)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not root then return end
-        for plr, _ in pairs(espEnabled) do
-            if espEnabled[plr] then
-                local head = plr.Character and plr.Character:FindFirstChild("Head")
-                local plrHum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-                if head then
-                    if not espList[plr] then
-                        local bill = Instance.new("BillboardGui")
-                        bill.Size = UDim2.new(0, 120, 0, 40)
-                        bill.Adornee = head
-                        bill.AlwaysOnTop = true
-                        bill.ExtentsOffset = Vector3.new(0, head.Size.Y / 2 + 1, 0)
-                        bill.Parent = workspace
-
-                        local label = Instance.new("TextLabel", bill)
-                        label.Size = UDim2.new(1, 0, 1, 0)
-                        label.BackgroundTransparency = 0.5
-                        label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                        label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        label.TextScaled = true
-                        label.TextStrokeTransparency = 0.5
-                        espList[plr] = { bill = bill, label = label }
-                    end
-                    local dist = (root.Position - head.Position).Magnitude
-                    local hp = plrHum and plrHum.Health or 0
-                    local maxHp = plrHum and plrHum.MaxHealth or 100
-                    espList[plr].label.Text = string.format("%s %.1fm\nHP: %.0f/%.0f", plr.Name, dist, hp, maxHp)
-                end
-            else
-                if espList[plr] then
-                    espList[plr].bill:Destroy()
-                    espList[plr] = nil
+    local noclipEnabled = false
+    local noclipConnection
+    local noclipParts = {}
+    local function applyNoClip()
+        if noclipConnection then noclipConnection:Disconnect() end
+        if noclipEnabled and player.Character then
+            noclipParts = {}
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                    table.insert(noclipParts, part)
                 end
             end
-        end
-    end)
-end
-
-local function addPlayerToESP(plr)
-    if plr == player then return end
-    if espEnabled[plr] ~= nil then return end
-    espEnabled[plr] = false
-
-    local plrFrame = Instance.new("Frame", espUIList)
-    plrFrame.Size = UDim2.new(1, -20, 0, 30)
-    plrFrame.Position = UDim2.new(0, 10, 0, espUIList.CanvasSize.Y.Offset)
-    plrFrame.BackgroundTransparency = 0.3
-    plrFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-
-    local nameLabel = Instance.new("TextLabel", plrFrame)
-    nameLabel.Size = UDim2.new(0.7, 0, 1, 0)
-    nameLabel.Position = UDim2.new(0, 0, 0, 0)
-    nameLabel.Text = plr.Name
-    nameLabel.TextScaled = true
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.TextTransparency = 0.2
-
-    local toggleButton = Instance.new("TextButton", plrFrame)
-    toggleButton.Size = UDim2.new(0.3, 0, 1, 0)
-    toggleButton.Position = UDim2.new(0.7, 0, 0, 0)
-    toggleButton.Text = "OFF"
-    toggleButton.TextScaled = true
-    toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    toggleButton.BackgroundTransparency = 0.3
-    toggleButton.TextTransparency = 0.2
-    toggleButton.MouseButton1Click:Connect(function()
-        espEnabled[plr] = not espEnabled[plr]
-        toggleButton.Text = espEnabled[plr] and "ON" or "OFF"
-        toggleButton.BackgroundColor3 = espEnabled[plr] and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        updateESP()
-    end)
-
-    local currentY = espUIList.CanvasSize.Y.Offset
-    espUIList.CanvasSize = UDim2.new(0, 0, 0, currentY + 35)
-end
-
-for _, plr in pairs(Players:GetPlayers()) do
-    addPlayerToESP(plr)
-end
-Players.PlayerAdded:Connect(addPlayerToESP)
-Players.PlayerRemoving:Connect(function(plr)
-    if espList[plr] then
-        espList[plr].bill:Destroy()
-        espList[plr] = nil
-    end
-    if espEnabled[plr] ~= nil then espEnabled[plr] = nil end
-    for _, frame in pairs(espUIList:GetChildren()) do
-        local label = frame:FindFirstChildWhichIsA("TextLabel")
-        if label and label.Text == plr.Name then
-            frame:Destroy()
-        end
-    end
-    local yOffset = 0
-    for _, frame in pairs(espUIList:GetChildren()) do
-        if frame:IsA("Frame") then
-            frame.Position = UDim2.new(0, 10, 0, yOffset)
-            yOffset = yOffset + 30
-        end
-    end
-    espUIList.CanvasSize = UDim2.new(0, 0, 0, yOffset)
-end)
-
-updateESP()
-
--------------------------------------------------
--- Teleport機能
--------------------------------------------------
-local teleportDropdown = Instance.new("TextButton", teleportFrame)
-teleportDropdown.Size = UDim2.new(0, 180, 0, 35)
-teleportDropdown.Position = UDim2.new(0, 20, 0, 20)
-teleportDropdown.Text = "Select Player"
-teleportDropdown.TextScaled = true
-teleportDropdown.BackgroundColor3 = Color3.fromRGB(50, 80, 130)
-teleportDropdown.BackgroundTransparency = 0.3
-teleportDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
-teleportDropdown.TextTransparency = 0.2
-
-local teleportList = Instance.new("ScrollingFrame", teleportFrame) -- ScrollingFrameに変更
-teleportList.Size = UDim2.new(0, 180, 0, 200) -- 固定サイズでスクロール可能に
-teleportList.Position = UDim2.new(0, 20, 0, 60)
-teleportList.BackgroundColor3 = Color3.fromRGB(30, 30, 50) -- 背景フレームに色を追加
-teleportList.BackgroundTransparency = 0.3
-teleportList.CanvasSize = UDim2.new(0, 0, 0, 0)
-teleportList.Visible = false
-teleportList.ScrollBarThickness = 6
-Instance.new("UICorner", teleportList).CornerRadius = UDim.new(0, 6) -- 角を丸く
-
-local playerButtons = {}
-teleportDropdown.MouseButton1Click:Connect(function()
-    teleportList.Visible = not teleportList.Visible
-    if teleportList.Visible then
-        local playerCount = #Players:GetPlayers()
-        teleportList.CanvasSize = UDim2.new(0, 0, 0, playerCount * 30) -- CanvasSizeをプレイヤー数に基づく
-        for i, plr in pairs(Players:GetPlayers()) do
-            if plr ~= player then
-                if not playerButtons[plr] then
-                    local btn = Instance.new("TextButton", teleportList)
-                    btn.Size = UDim2.new(1, -10, 0, 30) -- 少し余白を残す
-                    btn.Position = UDim2.new(0, 5, 0, (i - 1) * 30)
-                    btn.Text = plr.Name
-                    btn.TextScaled = true
-                    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-                    btn.BackgroundTransparency = 0.3
-                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    btn.TextTransparency = 0.2
-                    btn.MouseButton1Click:Connect(function()
-                        if plr.Character and player.Character then
-                            local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-                            local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
-                            if targetRoot and myRoot then
-                                myRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 5, 0)
-                            end
+            noclipConnection = RunService.Stepped:Connect(function()
+                if noclipEnabled and player.Character then
+                    for _, part in pairs(noclipParts) do
+                        if part.Parent then
+                            part.CanCollide = false
                         end
-                        teleportList.Visible = false
-                    end)
-                    playerButtons[plr] = btn
+                    end
+                else
+                    noclipConnection:Disconnect()
                 end
+            end)
+        end
+    end
+
+    BasicsTab:CreateToggle({
+        Name = "NoClip",
+        CurrentValue = settings.NoClip,
+        Callback = function(Value)
+            noclipEnabled = Value
+            settings.NoClip = Value
+            applyNoClip()
+            Rayfield:Notify({
+                Title = "NoClip",
+                Content = "NoClipを" .. (Value and "有効" or "無効") .. "にしました",
+                Duration = 3
+            })
+        end
+    })
+
+    BasicsTab:CreateInput({
+        Name = "WalkSpeed (16-400)",
+        PlaceholderText = "16",
+        RemoveTextAfterFocusLost = false,
+        Callback = function(Text)
+            local value = tonumber(Text)
+            if value and value >= 16 and value <= 400 and humanoid then
+                humanoid.WalkSpeed = value
+                settings.WalkSpeed = value
+                Rayfield:Notify({
+                    Title = "WalkSpeed",
+                    Content = "WalkSpeedを" .. value .. "に設定しました",
+                    Duration = 3
+                })
+            else
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "16～400の範囲で入力してください",
+                    Duration = 3
+                })
             end
         end
-    else
-        teleportList.CanvasSize = UDim2.new(0, 0, 0, 0)
-    end
-end)
+    })
 
-Players.PlayerAdded:Connect(function(plr)
-    if plr ~= player and not playerButtons[plr] then
-        local playerCount = #Players:GetPlayers()
-        teleportList.CanvasSize = UDim2.new(0, 0, 0, playerCount * 30)
-        local btn = Instance.new("TextButton", teleportList)
-        btn.Size = UDim2.new(1, -10, 0, 30)
-        btn.Position = UDim2.new(0, 5, 0, (playerCount - 1) * 30)
-        btn.Text = plr.Name
-        btn.TextScaled = true
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-        btn.BackgroundTransparency = 0.3
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextTransparency = 0.2
-        btn.MouseButton1Click:Connect(function()
-            if plr.Character and player.Character then
-                local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-                local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
-                if targetRoot and myRoot then
-                    myRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 5, 0)
+    BasicsTab:CreateInput({
+        Name = "JumpPower (50-600)",
+        PlaceholderText = "50",
+        RemoveTextAfterFocusLost = false,
+        Callback = function(Text)
+            local value = tonumber(Text)
+            if value and value >= 50 and value <= 600 and humanoid then
+                humanoid.UseJumpPower = true
+                humanoid.JumpPower = value
+                settings.JumpPower = value
+                Rayfield:Notify({
+                    Title = "JumpPower",
+                    Content = "JumpPowerを" .. value .. "に設定しました",
+                    Duration = 3
+                })
+            else
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "50～600の範囲で入力してください",
+                    Duration = 3
+                })
+            end
+        end
+    })
+
+    local infiniteJumpEnabled = false
+    BasicsTab:CreateToggle({
+        Name = "Infinite Jump",
+        CurrentValue = settings.InfiniteJump,
+        Callback = function(Value)
+            infiniteJumpEnabled = Value
+            settings.InfiniteJump = Value
+            Rayfield:Notify({
+                Title = "Infinite Jump",
+                Content = "Infinite Jumpを" .. (Value and "有効" or "無効") .. "にしました",
+                Duration = 3
+            })
+        end
+    })
+
+    UserInputService.JumpRequest:Connect(function()
+        if infiniteJumpEnabled and humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+
+    local ESPTab = Window:CreateTab("ESP", nil)
+    local espList = {}
+    local espEnabled = {}
+    local espConnection
+
+    local function updateESP()
+        if espConnection then espConnection:Disconnect() end
+        espConnection = RunService.Heartbeat:Connect(function()
+            task.wait(0.1)
+            local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+            for plr, _ in pairs(espEnabled) do
+                if espEnabled[plr] then
+                    local head = plr.Character and plr.Character:FindFirstChild("Head")
+                    local plrHum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+                    if head then
+                        if not espList[plr] then
+                            local bill = Instance.new("BillboardGui")
+                            bill.Size = UDim2.new(0, 120, 0, 40)
+                            bill.Adornee = head
+                            bill.AlwaysOnTop = true
+                            bill.ExtentsOffset = Vector3.new(0, head.Size.Y / 2 + 1, 0)
+                            bill.Parent = workspace
+                            local label = Instance.new("TextLabel", bill)
+                            label.Size = UDim2.new(1, 0, 1, 0)
+                            label.BackgroundTransparency = 0.5
+                            label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            label.TextScaled = true
+                            label.TextStrokeTransparency = 0.5
+                            espList[plr] = { bill = bill, label = label }
+                        end
+                        local dist = (root.Position - head.Position).Magnitude
+                        local hp = plrHum and plrHum.Health or 0
+                        local maxHp = plrHum and plrHum.MaxHealth or 100
+                        espList[plr].label.Text = string.format("%s %.1fm\nHP: %.0f/%.0f", plr.Name, dist, hp, maxHp)
+                    end
+                else
+                    if espList[plr] then
+                        espList[plr].bill:Destroy()
+                        espList[plr] = nil
+                    end
                 end
             end
-            teleportList.Visible = false
         end)
-        playerButtons[plr] = btn
     end
-end)
 
-Players.PlayerRemoving:Connect(function(plr)
-    if playerButtons[plr] then
-        playerButtons[plr]:Destroy()
-        playerButtons[plr] = nil
-        local yOffset = 0
-        for _, btn in pairs(teleportList:GetChildren()) do
-            if btn:IsA("TextButton") then
-                btn.Position = UDim2.new(0, 5, 0, yOffset)
-                yOffset = yOffset + 30
+    local function addPlayerToESP(plr)
+        if plr == player then return end
+        if espEnabled[plr] ~= nil then return end
+        espEnabled[plr] = false
+        ESPTab:CreateToggle({
+            Name = plr.Name,
+            CurrentValue = false,
+            Callback = function(Value)
+                espEnabled[plr] = Value
+                updateESP()
+                Rayfield:Notify({
+                    Title = "ESP",
+                    Content = plr.Name .. " のESPを" .. (Value and "有効" or "無効") .. "にしました",
+                    Duration = 3
+                })
+            end
+        })
+    end
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        addPlayerToESP(plr)
+    end
+    Players.PlayerAdded:Connect(addPlayerToESP)
+    Players.PlayerRemoving:Connect(function(plr)
+        if espList[plr] then
+            espList[plr].bill:Destroy()
+            espList[plr] = nil
+        end
+        if espEnabled[plr] ~= nil then espEnabled[plr] = nil end
+    end)
+
+    updateESP()
+
+    local TeleportTab = Window:CreateTab("Teleport", nil)
+
+    local function updateTeleportDropdown(dropdown)
+        local playerNames = {}
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= player then
+                table.insert(playerNames, plr.Name)
+                print("プレイヤー追加: " .. plr.Name)
             end
         end
-        teleportList.CanvasSize = UDim2.new(0, 0, 0, yOffset)
+        dropdown:Refresh(playerNames, true)
+        print("ドロップダウン更新: " .. #playerNames .. " プレイヤー")
     end
-end)
 
--- 初期状態のUI更新
-noclipButton.Text = settings.NoClip and "NoClip: ON" or "NoClip: OFF"
-noclipButton.BackgroundColor3 = settings.NoClip and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-noclipEnabled = settings.NoClip
-if noclipEnabled then applyNoClip() end
+    local teleportDropdown = TeleportTab:CreateDropdown({
+        Name = "Teleport to Player",
+        Options = {},
+        CurrentOption = {"Select Player"},
+        MultipleOptions = false,
+        Callback = function(Option)
+            print("ドロップダウン選択: " .. tostring(Option))
+            if type(Option) == "table" then
+                Option = Option[1]
+                print("テーブルから抽出されたオプション: " .. tostring(Option))
+            end
+            if Option == "Select Player" or not Option then
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "有効なプレイヤーを選択してください",
+                    Duration = 3
+                })
+                return
+            end
+            local targetPlayer = Players:FindFirstChild(Option)
+            if not targetPlayer then
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "プレイヤーが見つかりません: " .. tostring(Option),
+                    Duration = 3
+                })
+                return
+            end
+            if not targetPlayer.Character then
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = targetPlayer.Name .. " のキャラクターがロードされていません",
+                    Duration = 3
+                })
+                return
+            end
+            if not player.Character then
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "あなたのキャラクターがロードされていません",
+                    Duration = 3
+                })
+                return
+            end
+            local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            if not targetRoot or not myRoot then
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "HumanoidRootPartが見つかりません",
+                    Duration = 3
+                })
+                return
+            end
+            myRoot.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0, 5, 0))
+            Rayfield:Notify({
+                Title = "成功",
+                Content = targetPlayer.Name .. " にテレポートしました",
+                Duration = 3
+            })
+        end
+    })
 
-ijButton.Text = settings.InfiniteJump and "Infinite Jump: ON" or "Infinite Jump: OFF"
-ijButton.BackgroundColor3 = settings.InfiniteJump and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-infiniteJumpEnabled = settings.InfiniteJump
+    Players.PlayerAdded:Connect(function(plr)
+        if plr ~= player then
+            updateTeleportDropdown(teleportDropdown)
+        end
+    end)
+
+    Players.PlayerRemoving:Connect(function(plr)
+        if plr ~= player then
+            updateTeleportDropdown(teleportDropdown)
+        end
+    end)
+
+    updateTeleportDropdown(teleportDropdown)
+
+    noclipEnabled = settings.NoClip
+    if noclipEnabled then applyNoClip() end
+    infiniteJumpEnabled = settings.InfiniteJump
+end
