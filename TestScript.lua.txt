@@ -9,7 +9,9 @@ local settings = {
     NoClip = false,
     WalkSpeed = 16,
     JumpPower = 50,
-    InfiniteJump = false
+    InfiniteJump = false,
+    Fly = false, -- 飛行用の設定
+    FlySpeed = 100 -- デフォルトの飛行速度（1×100）
 }
 
 local function updateHumanoid()
@@ -216,6 +218,113 @@ function initializeMainGui()
         end
     })
 
+    -- 飛行機能の追加
+    local flying = false
+    local bodyVel
+    local bodyGyro
+    local PlayerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+    local ControlModule = PlayerModule:GetControls()
+
+    local function startFlying()
+        if not player.Character or not humanoid or not player.Character:FindFirstChild("HumanoidRootPart") then
+            Rayfield:Notify({
+                Title = "エラー",
+                Content = "キャラクターがロードされていません",
+                Duration = 3
+            })
+            return
+        end
+        flying = true
+        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        bodyVel = Instance.new("BodyVelocity")
+        bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bodyVel.P = 10000
+        bodyVel.Parent = rootPart
+
+        bodyGyro = Instance.new("BodyGyro")
+        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bodyGyro.P = 10000
+        bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+        bodyGyro.Parent = rootPart
+
+        humanoid.PlatformStand = true
+        Rayfield:Notify({
+            Title = "Fly",
+            Content = "飛行を有効にしました",
+            Duration = 3
+        })
+    end
+
+    local function stopFlying()
+        flying = false
+        if bodyVel then bodyVel:Destroy() end
+        if bodyGyro then bodyGyro:Destroy() end
+        if humanoid then humanoid.PlatformStand = false end
+        Rayfield:Notify({
+            Title = "Fly",
+            Content = "飛行を無効にしました",
+            Duration = 3
+        })
+    end
+
+    -- 飛行制御
+    RunService.RenderStepped:Connect(function()
+        if flying and bodyVel and bodyGyro and player.Character then
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if not rootPart then
+                stopFlying()
+                return
+            end
+            local camera = workspace.CurrentCamera
+            bodyGyro.CFrame = camera.CFrame
+            local moveVector = ControlModule:GetMoveVector()
+            if moveVector.Magnitude > 0 then
+                local moveWorld = camera.CFrame:VectorToWorldSpace(moveVector)
+                bodyVel.Velocity = moveWorld * settings.FlySpeed
+            else
+                bodyVel.Velocity = Vector3.zero
+            end
+        end
+    end)
+
+    -- 飛行トグル
+    BasicsTab:CreateToggle({
+        Name = "Fly",
+        CurrentValue = settings.Fly,
+        Callback = function(Value)
+            settings.Fly = Value
+            if Value then
+                startFlying()
+            else
+                stopFlying()
+            end
+        end
+    })
+
+    -- 飛行速度入力（1～10を100倍）
+    BasicsTab:CreateInput({
+        Name = "FlySpeed (1-10)",
+        PlaceholderText = "1",
+        RemoveTextAfterFocusLost = false,
+        Callback = function(Text)
+            local value = tonumber(Text)
+            if value and value >= 1 and value <= 10 and math.floor(value) == value then
+                settings.FlySpeed = value * 100
+                Rayfield:Notify({
+                    Title = "FlySpeed",
+                    Content = "飛行速度を" .. settings.FlySpeed .. "に設定しました",
+                    Duration = 3
+                })
+            else
+                Rayfield:Notify({
+                    Title = "エラー",
+                    Content = "1～10の整数を入力してください",
+                    Duration = 3
+                })
+            end
+        end
+    })
+
     UserInputService.JumpRequest:Connect(function()
         if infiniteJumpEnabled and humanoid then
             humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -301,97 +410,6 @@ function initializeMainGui()
     end)
 
     updateESP()
-
-    local TeleportTab = Window:CreateTab("Teleport", nil)
-
-    local function updateTeleportDropdown(dropdown)
-        local playerNames = {}
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr ~= player then
-                table.insert(playerNames, plr.Name)
-                print("プレイヤー追加: " .. plr.Name)
-            end
-        end
-        dropdown:Refresh(playerNames, true)
-        print("ドロップダウン更新: " .. #playerNames .. " プレイヤー")
-    end
-
-    local teleportDropdown = TeleportTab:CreateDropdown({
-        Name = "Teleport to Player",
-        Options = {},
-        CurrentOption = {"Select Player"},
-        MultipleOptions = false,
-        Callback = function(Option)
-            print("ドロップダウン選択: " .. tostring(Option))
-            if type(Option) == "table" then
-                Option = Option[1]
-                print("テーブルから抽出されたオプション: " .. tostring(Option))
-            end
-            if Option == "Select Player" or not Option then
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "有効なプレイヤーを選択してください",
-                    Duration = 3
-                })
-                return
-            end
-            local targetPlayer = Players:FindFirstChild(Option)
-            if not targetPlayer then
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "プレイヤーが見つかりません: " .. tostring(Option),
-                    Duration = 3
-                })
-                return
-            end
-            if not targetPlayer.Character then
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = targetPlayer.Name .. " のキャラクターがロードされていません",
-                    Duration = 3
-                })
-                return
-            end
-            if not player.Character then
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "あなたのキャラクターがロードされていません",
-                    Duration = 3
-                })
-                return
-            end
-            local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-            local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
-            if not targetRoot or not myRoot then
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "HumanoidRootPartが見つかりません",
-                    Duration = 3
-                })
-                return
-            end
-            myRoot.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0, 5, 0))
-            Rayfield:Notify({
-                Title = "成功",
-                Content = targetPlayer.Name .. " にテレポートしました",
-                Duration = 3
-            })
-        end
-    })
-
-    Players.PlayerAdded:Connect(function(plr)
-        if plr ~= player then
-            updateTeleportDropdown(teleportDropdown)
-        end
-    end)
-
-    Players.PlayerRemoving:Connect(function(plr)
-        if plr ~= player then
-            updateTeleportDropdown(teleportDropdown)
-        end
-    end)
-
-    updateTeleportDropdown(teleportDropdown)
 
     noclipEnabled = settings.NoClip
     if noclipEnabled then applyNoClip() end
