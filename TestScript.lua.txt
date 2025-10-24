@@ -32,386 +32,333 @@ updateHumanoid()
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local keyGui = Instance.new("ScreenGui", playerGui)
-keyGui.Name = "KeyGui"
-keyGui.ResetOnSpawn = false
-
-local keyFrame = Instance.new("Frame", keyGui)
-keyFrame.Size = UDim2.new(0, 300, 0, 150)
-keyFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
-keyFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-keyFrame.BackgroundTransparency = 0.3
-Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0, 6)
-
-local keyBox = Instance.new("TextBox", keyFrame)
-keyBox.Size = UDim2.new(0, 280, 0, 40)
-keyBox.Position = UDim2.new(0, 10, 0.2, 0)
-keyBox.PlaceholderText = "Enter Key"
-keyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-keyBox.BackgroundTransparency = 0.3
-keyBox.TextScaled = true
-keyBox.TextTransparency = 0.2
-
-local keyButton = Instance.new("TextButton", keyFrame)
-keyButton.Size = UDim2.new(0, 280, 0, 35)
-keyButton.Position = UDim2.new(0, 10, 0.55, 0)
-keyButton.Text = "Enter"
-keyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-keyButton.BackgroundColor3 = Color3.fromRGB(80, 200, 255)
-keyButton.BackgroundTransparency = 0.3
-keyButton.TextScaled = true
-keyButton.TextTransparency = 0.2
-
-local keyError = Instance.new("TextLabel", keyFrame)
-keyError.Size = UDim2.new(1, 0, 0, 25)
-keyError.Position = UDim2.new(0, 0, 0.85, 0)
-keyError.TextColor3 = Color3.fromRGB(255, 0, 0)
-keyError.BackgroundTransparency = 1
-keyError.TextScaled = true
-keyError.Text = ""
-keyError.TextTransparency = 0.2
-
 local correctKey = "828945"
-local function submitKey()
-    if keyBox.Text == correctKey then
-        keyGui:Destroy()
-        print("キー認証成功")
-        Rayfield:Notify({
-            Title = "キー認証",
-            Content = "認証成功！GUIを表示します。",
-            Duration = 3
-        })
-        initializeMainGui()
-    else
-        keyError.Text = "Wrong Key!"
-        Rayfield:Notify({
-            Title = "エラー",
-            Content = "間違ったキーを入力しました",
-            Duration = 3
-        })
-    end
-end
-keyButton.MouseButton1Click:Connect(submitKey)
-keyBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then submitKey() end
-end)
 
-function initializeMainGui()
-    local Window = Rayfield:CreateWindow({
-        Name = "Test Script",
-        LoadingTitle = "Test Script",
-        LoadingSubtitle = "by [Your Name]",
-        ConfigurationSaving = {
-            Enabled = true,
-            FolderName = "TestScriptConfig",
-            FileName = "Settings"
-        },
-        KeySystem = false
-    })
+-- メインウィンドウを作成（キーシステム統合）
+local Window = Rayfield:CreateWindow({
+    Name = "Test Script",
+    LoadingTitle = "Test Script",
+    LoadingSubtitle = "by [Your Name]",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "TestScriptConfig",
+        FileName = "Settings"
+    },
+    KeySystem = true, -- キーシステムを有効化
+    KeySettings = {
+        Title = "キー入力",
+        Subtitle = "Test Script認証",
+        Note = "キーを入力してください: ",
+        FileName = "TestScriptKey",
+        SaveKey = true, -- キーを保存（次回から自動）
+        GrabKeyFromSite = false, -- 直接キー指定
+        Key = {correctKey} -- 正しいキー（複数可）
+    }
+})
 
-    local BasicsTab = Window:CreateTab("Basics", nil)
+-- キー認証成功後、自動で以下が実行されUIが表示される
 
-    local noclipEnabled = false
-    local noclipConnection
-    local noclipParts = {}
-    local function applyNoClip()
-        if noclipConnection then noclipConnection:Disconnect() end
-        if noclipEnabled and player.Character then
-            noclipParts = {}
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                    table.insert(noclipParts, part)
-                end
-            end
-            noclipConnection = RunService.Stepped:Connect(function()
-                if noclipEnabled and player.Character then
-                    for _, part in pairs(noclipParts) do
-                        if part.Parent then
-                            part.CanCollide = false
-                        end
-                    end
-                else
-                    noclipConnection:Disconnect()
-                end
-            end)
-        end
-    end
+local BasicsTab = Window:CreateTab("Basics", nil)
 
-    BasicsTab:CreateToggle({
-        Name = "NoClip",
-        CurrentValue = settings.NoClip,
-        Callback = function(Value)
-            noclipEnabled = Value
-            settings.NoClip = Value
-            applyNoClip()
-            Rayfield:Notify({
-                Title = "NoClip",
-                Content = "NoClipを" .. (Value and "有効" or "無効") .. "にしました",
-                Duration = 3
-            })
-        end
-    })
-
-    BasicsTab:CreateInput({
-        Name = "WalkSpeed (16-400)",
-        PlaceholderText = "16",
-        RemoveTextAfterFocusLost = false,
-        Callback = function(Text)
-            local value = tonumber(Text)
-            if value and value >= 16 and value <= 400 and humanoid then
-                humanoid.WalkSpeed = value
-                settings.WalkSpeed = value
-                Rayfield:Notify({
-                    Title = "WalkSpeed",
-                    Content = "WalkSpeedを" .. value .. "に設定しました",
-                    Duration = 3
-                })
-            else
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "16～400の範囲で入力してください",
-                    Duration = 3
-                })
+local noclipEnabled = false
+local noclipConnection
+local noclipParts = {}
+local function applyNoClip()
+    if noclipConnection then noclipConnection:Disconnect() end
+    if noclipEnabled and player.Character then
+        noclipParts = {}
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+                table.insert(noclipParts, part)
             end
         end
-    })
-
-    BasicsTab:CreateInput({
-        Name = "JumpPower (50-600)",
-        PlaceholderText = "50",
-        RemoveTextAfterFocusLost = false,
-        Callback = function(Text)
-            local value = tonumber(Text)
-            if value and value >= 50 and value <= 600 and humanoid then
-                humanoid.UseJumpPower = true
-                humanoid.JumpPower = value
-                settings.JumpPower = value
-                Rayfield:Notify({
-                    Title = "JumpPower",
-                    Content = "JumpPowerを" .. value .. "に設定しました",
-                    Duration = 3
-                })
-            else
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "50～600の範囲で入力してください",
-                    Duration = 3
-                })
-            end
-        end
-    })
-
-    local infiniteJumpEnabled = false
-    BasicsTab:CreateToggle({
-        Name = "Infinite Jump",
-        CurrentValue = settings.InfiniteJump,
-        Callback = function(Value)
-            infiniteJumpEnabled = Value
-            settings.InfiniteJump = Value
-            Rayfield:Notify({
-                Title = "Infinite Jump",
-                Content = "Infinite Jumpを" .. (Value and "有効" or "無効") .. "にしました",
-                Duration = 3
-            })
-        end
-    })
-
-    -- 飛行機能の追加
-    local flying = false
-    local bodyVel
-    local bodyGyro
-    local PlayerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
-    local ControlModule = PlayerModule:GetControls()
-
-    local function startFlying()
-        if not player.Character or not humanoid or not player.Character:FindFirstChild("HumanoidRootPart") then
-            Rayfield:Notify({
-                Title = "エラー",
-                Content = "キャラクターがロードされていません",
-                Duration = 3
-            })
-            return
-        end
-        flying = true
-        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-        bodyVel = Instance.new("BodyVelocity")
-        bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-        bodyVel.P = 10000
-        bodyVel.Parent = rootPart
-
-        bodyGyro = Instance.new("BodyGyro")
-        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bodyGyro.P = 10000
-        bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-        bodyGyro.Parent = rootPart
-
-        humanoid.PlatformStand = true
-        Rayfield:Notify({
-            Title = "Fly",
-            Content = "飛行を有効にしました",
-            Duration = 3
-        })
-    end
-
-    local function stopFlying()
-        flying = false
-        if bodyVel then bodyVel:Destroy() end
-        if bodyGyro then bodyGyro:Destroy() end
-        if humanoid then humanoid.PlatformStand = false end
-        Rayfield:Notify({
-            Title = "Fly",
-            Content = "飛行を無効にしました",
-            Duration = 3
-        })
-    end
-
-    -- 飛行制御
-    RunService.RenderStepped:Connect(function()
-        if flying and bodyVel and bodyGyro and player.Character then
-            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-            if not rootPart then
-                stopFlying()
-                return
-            end
-            local camera = workspace.CurrentCamera
-            bodyGyro.CFrame = camera.CFrame
-            local moveVector = ControlModule:GetMoveVector()
-            if moveVector.Magnitude > 0 then
-                local moveWorld = camera.CFrame:VectorToWorldSpace(moveVector)
-                bodyVel.Velocity = moveWorld * settings.FlySpeed
-            else
-                bodyVel.Velocity = Vector3.zero
-            end
-        end
-    end)
-
-    -- 飛行トグル
-    BasicsTab:CreateToggle({
-        Name = "Fly",
-        CurrentValue = settings.Fly,
-        Callback = function(Value)
-            settings.Fly = Value
-            if Value then
-                startFlying()
-            else
-                stopFlying()
-            end
-        end
-    })
-
-    -- 飛行速度入力（1～10を100倍）
-    BasicsTab:CreateInput({
-        Name = "FlySpeed (1-10)",
-        PlaceholderText = "1",
-        RemoveTextAfterFocusLost = false,
-        Callback = function(Text)
-            local value = tonumber(Text)
-            if value and value >= 1 and value <= 10 and math.floor(value) == value then
-                settings.FlySpeed = value * 100
-                Rayfield:Notify({
-                    Title = "FlySpeed",
-                    Content = "飛行速度を" .. settings.FlySpeed .. "に設定しました",
-                    Duration = 3
-                })
-            else
-                Rayfield:Notify({
-                    Title = "エラー",
-                    Content = "1～10の整数を入力してください",
-                    Duration = 3
-                })
-            end
-        end
-    })
-
-    UserInputService.JumpRequest:Connect(function()
-        if infiniteJumpEnabled and humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end)
-
-    local ESPTab = Window:CreateTab("ESP", nil)
-    local espList = {}
-    local espEnabled = {}
-    local espConnection
-
-    local function updateESP()
-        if espConnection then espConnection:Disconnect() end
-        espConnection = RunService.Heartbeat:Connect(function()
-            task.wait(0.1)
-            local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            if not root then return end
-            for plr, _ in pairs(espEnabled) do
-                if espEnabled[plr] then
-                    local head = plr.Character and plr.Character:FindFirstChild("Head")
-                    local plrHum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-                    if head then
-                        if not espList[plr] then
-                            local bill = Instance.new("BillboardGui")
-                            bill.Size = UDim2.new(0, 120, 0, 40)
-                            bill.Adornee = head
-                            bill.AlwaysOnTop = true
-                            bill.ExtentsOffset = Vector3.new(0, head.Size.Y / 2 + 1, 0)
-                            bill.Parent = workspace
-                            local label = Instance.new("TextLabel", bill)
-                            label.Size = UDim2.new(1, 0, 1, 0)
-                            label.BackgroundTransparency = 0.5
-                            label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                            label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                            label.TextScaled = true
-                            label.TextStrokeTransparency = 0.5
-                            espList[plr] = { bill = bill, label = label }
-                        end
-                        local dist = (root.Position - head.Position).Magnitude
-                        local hp = plrHum and plrHum.Health or 0
-                        local maxHp = plrHum and plrHum.MaxHealth or 100
-                        espList[plr].label.Text = string.format("%s %.1fm\nHP: %.0f/%.0f", plr.Name, dist, hp, maxHp)
-                    end
-                else
-                    if espList[plr] then
-                        espList[plr].bill:Destroy()
-                        espList[plr] = nil
+        noclipConnection = RunService.Stepped:Connect(function()
+            if noclipEnabled and player.Character then
+                for _, part in pairs(noclipParts) do
+                    if part.Parent then
+                        part.CanCollide = false
                     end
                 end
+            else
+                noclipConnection:Disconnect()
             end
         end)
     end
+end
 
-    local function addPlayerToESP(plr)
-        if plr == player then return end
-        if espEnabled[plr] ~= nil then return end
-        espEnabled[plr] = false
-        ESPTab:CreateToggle({
-            Name = plr.Name,
-            CurrentValue = false,
-            Callback = function(Value)
-                espEnabled[plr] = Value
-                updateESP()
-                Rayfield:Notify({
-                    Title = "ESP",
-                    Content = plr.Name .. " のESPを" .. (Value and "有効" or "無効") .. "にしました",
-                    Duration = 3
-                })
-            end
+BasicsTab:CreateToggle({
+    Name = "NoClip",
+    CurrentValue = settings.NoClip,
+    Callback = function(Value)
+        noclipEnabled = Value
+        settings.NoClip = Value
+        applyNoClip()
+        Rayfield:Notify({
+            Title = "NoClip",
+            Content = "NoClipを" .. (Value and "有効" or "無効") .. "にしました",
+            Duration = 3
         })
     end
+})
 
-    for _, plr in pairs(Players:GetPlayers()) do
-        addPlayerToESP(plr)
-    end
-    Players.PlayerAdded:Connect(addPlayerToESP)
-    Players.PlayerRemoving:Connect(function(plr)
-        if espList[plr] then
-            espList[plr].bill:Destroy()
-            espList[plr] = nil
+BasicsTab:CreateInput({
+    Name = "WalkSpeed (16-400)",
+    PlaceholderText = "16",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local value = tonumber(Text)
+        if value and value >= 16 and value <= 400 and humanoid then
+            humanoid.WalkSpeed = value
+            settings.WalkSpeed = value
+            Rayfield:Notify({
+                Title = "WalkSpeed",
+                Content = "WalkSpeedを" .. value .. "に設定しました",
+                Duration = 3
+            })
+        else
+            Rayfield:Notify({
+                Title = "エラー",
+                Content = "16～400の範囲で入力してください",
+                Duration = 3
+            })
         end
-        if espEnabled[plr] ~= nil then espEnabled[plr] = nil end
-    end)
+    end
+})
 
-    updateESP()
+BasicsTab:CreateInput({
+    Name = "JumpPower (50-600)",
+    PlaceholderText = "50",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local value = tonumber(Text)
+        if value and value >= 50 and value <= 600 and humanoid then
+            humanoid.UseJumpPower = true
+            humanoid.JumpPower = value
+            settings.JumpPower = value
+            Rayfield:Notify({
+                Title = "JumpPower",
+                Content = "JumpPowerを" .. value .. "に設定しました",
+                Duration = 3
+            })
+        else
+            Rayfield:Notify({
+                Title = "エラー",
+                Content = "50～600の範囲で入力してください",
+                Duration = 3
+            })
+        end
+    end
+})
 
-    noclipEnabled = settings.NoClip
-    if noclipEnabled then applyNoClip() end
-    infiniteJumpEnabled = settings.InfiniteJump
+local infiniteJumpEnabled = false
+BasicsTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = settings.InfiniteJump,
+    Callback = function(Value)
+        infiniteJumpEnabled = Value
+        settings.InfiniteJump = Value
+        Rayfield:Notify({
+            Title = "Infinite Jump",
+            Content = "Infinite Jumpを" .. (Value and "有効" or "無効") .. "にしました",
+            Duration = 3
+        })
+    end
+})
+
+-- 飛行機能の追加
+local flying = false
+local bodyVel
+local bodyGyro
+local PlayerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+local ControlModule = PlayerModule:GetControls()
+
+local function startFlying()
+    if not player.Character or not humanoid or not player.Character:FindFirstChild("HumanoidRootPart") then
+        Rayfield:Notify({
+            Title = "エラー",
+            Content = "キャラクターがロードされていません",
+            Duration = 3
+        })
+        return
+    end
+    flying = true
+    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+    bodyVel = Instance.new("BodyVelocity")
+    bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVel.P = 10000
+    bodyVel.Parent = rootPart
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.P = 10000
+    bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+    bodyGyro.Parent = rootPart
+
+    humanoid.PlatformStand = true
+    Rayfield:Notify({
+        Title = "Fly",
+        Content = "飛行を有効にしました",
+        Duration = 3
+    })
 end
+
+local function stopFlying()
+    flying = false
+    if bodyVel then bodyVel:Destroy() end
+    if bodyGyro then bodyGyro:Destroy() end
+    if humanoid then humanoid.PlatformStand = false end
+    Rayfield:Notify({
+        Title = "Fly",
+        Content = "飛行を無効にしました",
+        Duration = 3
+    })
+end
+
+-- 飛行制御
+RunService.RenderStepped:Connect(function()
+    if flying and bodyVel and bodyGyro and player.Character then
+        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then
+            stopFlying()
+            return
+        end
+        local camera = workspace.CurrentCamera
+        bodyGyro.CFrame = camera.CFrame
+        local moveVector = ControlModule:GetMoveVector()
+        if moveVector.Magnitude > 0 then
+            local moveWorld = camera.CFrame:VectorToWorldSpace(moveVector)
+            bodyVel.Velocity = moveWorld * settings.FlySpeed
+        else
+            bodyVel.Velocity = Vector3.zero
+        end
+    end
+end)
+
+-- 飛行トグル
+BasicsTab:CreateToggle({
+    Name = "Fly",
+    CurrentValue = settings.Fly,
+    Callback = function(Value)
+        settings.Fly = Value
+        if Value then
+            startFlying()
+        else
+            stopFlying()
+        end
+    end
+})
+
+-- 飛行速度入力（1～10を100倍）
+BasicsTab:CreateInput({
+    Name = "FlySpeed (1-10)",
+    PlaceholderText = "1",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local value = tonumber(Text)
+        if value and value >= 1 and value <= 10 and math.floor(value) == value then
+            settings.FlySpeed = value * 100
+            Rayfield:Notify({
+                Title = "FlySpeed",
+                Content = "飛行速度を" .. settings.FlySpeed .. "に設定しました",
+                Duration = 3
+            })
+        else
+            Rayfield:Notify({
+                Title = "エラー",
+                Content = "1～10の整数を入力してください",
+                Duration = 3
+            })
+        end
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+local ESPTab = Window:CreateTab("ESP", nil)
+local espList = {}
+local espEnabled = {}
+local espConnection
+
+local function updateESP()
+    if espConnection then espConnection:Disconnect() end
+    espConnection = RunService.Heartbeat:Connect(function()
+        task.wait(0.1)
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        for plr, _ in pairs(espEnabled) do
+            if espEnabled[plr] then
+                local head = plr.Character and plr.Character:FindFirstChild("Head")
+                local plrHum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+                if head then
+                    if not espList[plr] then
+                        local bill = Instance.new("BillboardGui")
+                        bill.Size = UDim2.new(0, 120, 0, 40)
+                        bill.Adornee = head
+                        bill.AlwaysOnTop = true
+                        bill.ExtentsOffset = Vector3.new(0, head.Size.Y / 2 + 1, 0)
+                        bill.Parent = workspace
+                        local label = Instance.new("TextLabel", bill)
+                        label.Size = UDim2.new(1, 0, 1, 0)
+                        label.BackgroundTransparency = 0.5
+                        label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        label.TextScaled = true
+                        label.TextStrokeTransparency = 0.5
+                        espList[plr] = { bill = bill, label = label }
+                    end
+                    local dist = (root.Position - head.Position).Magnitude
+                    local hp = plrHum and plrHum.Health or 0
+                    local maxHp = plrHum and plrHum.MaxHealth or 100
+                    espList[plr].label.Text = string.format("%s %.1fm\nHP: %.0f/%.0f", plr.Name, dist, hp, maxHp)
+                end
+            else
+                if espList[plr] then
+                    espList[plr].bill:Destroy()
+                    espList[plr] = nil
+                end
+            end
+        end
+    end)
+end
+
+local function addPlayerToESP(plr)
+    if plr == player then return end
+    if espEnabled[plr] ~= nil then return end
+    espEnabled[plr] = false
+    ESPTab:CreateToggle({
+        Name = plr.Name,
+        CurrentValue = false,
+        Callback = function(Value)
+            espEnabled[plr] = Value
+            updateESP()
+            Rayfield:Notify({
+                Title = "ESP",
+                Content = plr.Name .. " のESPを" .. (Value and "有効" or "無効") .. "にしました",
+                Duration = 3
+            })
+        end
+    })
+end
+
+for _, plr in pairs(Players:GetPlayers()) do
+    addPlayerToESP(plr)
+end
+Players.PlayerAdded:Connect(addPlayerToESP)
+Players.PlayerRemoving:Connect(function(plr)
+    if espList[plr] then
+        espList[plr].bill:Destroy()
+        espList[plr] = nil
+    end
+    if espEnabled[plr] ~= nil then espEnabled[plr] = nil end
+end)
+
+updateESP()
+
+noclipEnabled = settings.NoClip
+if noclipEnabled then applyNoClip() end
+infiniteJumpEnabled = settings.InfiniteJump
