@@ -1,0 +1,226 @@
+-- StarterPlayer > StarterPlayerScripts に LocalScript を入れてください
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- Character取得
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+-- PlayerModuleから現在の移動方向を取る
+local PlayerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+local ControlModule = PlayerModule:GetControls()
+
+-- ===== おしゃれなGUI作成 =====
+local gui = Instance.new("ScreenGui")
+gui.Name = "FlyGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- メインフレーム
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 180, 0, 80)
+mainFrame.Position = UDim2.new(0.85, 0, 0.75, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = gui
+
+-- 角を丸くする
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = mainFrame
+
+-- グラデーション効果
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 45, 60)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+}
+gradient.Rotation = 45
+gradient.Parent = mainFrame
+
+-- タイトルラベル
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 25)
+titleLabel.Position = UDim2.new(0, 0, 0, 5)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "✈️ フライモード"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 16
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = mainFrame
+
+-- ボタン
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 140, 0, 40)
+button.Position = UDim2.new(0.5, 0, 0, 35)
+button.AnchorPoint = Vector2.new(0.5, 0)
+button.Text = "起動"
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+button.BorderSizePixel = 0
+button.TextColor3 = Color3.new(1, 1, 1)
+button.TextSize = 18
+button.Font = Enum.Font.GothamBold
+button.Parent = mainFrame
+
+-- ボタンの角を丸くする
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 10)
+buttonCorner.Parent = button
+
+-- ボタングラデーション
+local buttonGradient = Instance.new("UIGradient")
+buttonGradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 140, 255))
+}
+buttonGradient.Rotation = 90
+buttonGradient.Parent = button
+
+-- ステータスインジケーター
+local statusDot = Instance.new("Frame")
+statusDot.Size = UDim2.new(0, 10, 0, 10)
+statusDot.Position = UDim2.new(0, 10, 0, 12)
+statusDot.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+statusDot.BorderSizePixel = 0
+statusDot.Parent = mainFrame
+
+local dotCorner = Instance.new("UICorner")
+dotCorner.CornerRadius = UDim.new(1, 0)
+dotCorner.Parent = statusDot
+
+-- 飛行設定
+local flying = false
+local speed = 60
+local bodyVel
+local bodyGyro
+
+-- アニメーション関数
+local function tweenButton(color, text)
+	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local goal = {BackgroundColor3 = color}
+	local tween = TweenService:Create(button, tweenInfo, goal)
+	tween:Play()
+	button.Text = text
+end
+
+local function tweenDot(color)
+	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local goal = {BackgroundColor3 = color}
+	local tween = TweenService:Create(statusDot, tweenInfo, goal)
+	tween:Play()
+end
+
+-- 飛行開始
+local function startFlying()
+	flying = true
+	tweenButton(Color3.fromRGB(255, 70, 70), "停止")
+	tweenDot(Color3.fromRGB(70, 255, 70))
+	
+	bodyVel = Instance.new("BodyVelocity")
+	bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	bodyVel.P = 10000
+	bodyVel.Parent = rootPart
+
+	bodyGyro = Instance.new("BodyGyro")
+	bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+	bodyGyro.P = 10000
+	bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+	bodyGyro.Parent = rootPart
+
+	humanoid.PlatformStand = true
+end
+
+-- 飛行停止
+local function stopFlying()
+	flying = false
+	tweenButton(Color3.fromRGB(0, 170, 255), "起動")
+	tweenDot(Color3.fromRGB(255, 70, 70))
+	
+	if bodyVel then bodyVel:Destroy() end
+	if bodyGyro then bodyGyro:Destroy() end
+	humanoid.PlatformStand = false
+end
+
+-- ボタンホバー効果
+button.MouseEnter:Connect(function()
+	if not flying then
+		tweenButton(Color3.fromRGB(0, 190, 255), "起動")
+	else
+		tweenButton(Color3.fromRGB(255, 90, 90), "停止")
+	end
+end)
+
+button.MouseLeave:Connect(function()
+	if not flying then
+		tweenButton(Color3.fromRGB(0, 170, 255), "起動")
+	else
+		tweenButton(Color3.fromRGB(255, 70, 70), "停止")
+	end
+end)
+
+-- ボタン切り替え
+button.MouseButton1Click:Connect(function()
+	-- クリックアニメーション
+	local originalSize = button.Size
+	button.Size = UDim2.new(0, 135, 0, 38)
+	wait(0.1)
+	button.Size = originalSize
+	
+	if flying then
+		stopFlying()
+	else
+		startFlying()
+	end
+end)
+
+-- 飛行制御
+RunService.RenderStepped:Connect(function()
+	if flying and bodyVel and bodyGyro then
+		local camera = workspace.CurrentCamera
+		bodyGyro.CFrame = camera.CFrame
+
+		local moveVector = ControlModule:GetMoveVector()
+		if moveVector.Magnitude > 0 then
+			local moveWorld = camera.CFrame:VectorToWorldSpace(moveVector)
+			bodyVel.Velocity = moveWorld * speed
+		else
+			bodyVel.Velocity = Vector3.zero
+		end
+	end
+end)
+
+-- ドラッグ機能（修正版）
+local dragging = false
+local dragStart
+local startPos
+
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
