@@ -1,0 +1,451 @@
+-- NeonRayfield UI Library
+-- Inspired by Rayfield, with Neon-style design and animations
+-- Usage: 
+-- 1. Copy this code to a Roblox Script (LocalScript in StarterGui or similar)
+-- 2. For GitHub shortening: Paste into a GitHub Gist, set as Lua, get raw URL (e.g., https://gist.githubusercontent.com/yourusername/abc123/raw/main/neonrayfield.lua)
+-- 3. In Roblox, load via: loadstring(game:HttpGet("YOUR_RAW_URL"))()
+-- Features: Neon glow effects, smooth animations using TweenService, basic UI elements (Window, Tab, Section, Button, Toggle, Slider)
+
+local Library = {}
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Neon Colors
+local NeonColors = {
+    Primary = Color3.fromRGB(0, 162, 255), -- Blue neon
+    Secondary = Color3.fromRGB(255, 0, 162), -- Pink neon
+    Accent = Color3.fromRGB(128, 0, 255), -- Purple neon
+    Background = Color3.fromRGB(15, 15, 25), -- Dark BG
+    Dark = Color3.fromRGB(5, 5, 10),
+    Text = Color3.fromRGB(255, 255, 255),
+    Muted = Color3.fromRGB(150, 150, 150)
+}
+
+-- Animation Tweens
+local function tween(object, properties, duration, easingStyle, easingDirection)
+    local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quart, easingDirection or Enum.EasingDirection.Out)
+    local tween = TweenService:Create(object, tweenInfo, properties)
+    tween:Play()
+    return tween
+end
+
+-- Create ScreenGui
+local function createGui()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "NeonRayfield"
+    screenGui.Parent = game.CoreGui -- Or game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    screenGui.ResetOnSpawn = false
+    return screenGui
+end
+
+-- Window Class
+local Window = {}
+Window.__index = Window
+
+function Window.new(title)
+    local self = setmetatable({}, Window)
+    self.Gui = createGui()
+    self.MainFrame = Instance.new("Frame")
+    self.MainFrame.Name = "MainFrame"
+    self.MainFrame.Size = UDim2.new(0, 500, 0, 400)
+    self.MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+    self.MainFrame.BackgroundColor3 = NeonColors.Background
+    self.MainFrame.BorderSizePixel = 0
+    self.MainFrame.Parent = self.Gui
+    
+    -- Neon Border
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = NeonColors.Primary
+    stroke.Thickness = 2
+    stroke.Parent = self.MainFrame
+    tween(stroke, {Thickness = 3}, 0.5, Enum.EasingStyle.Back)
+    
+    -- Corner
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = self.MainFrame
+    
+    -- Title Bar
+    self.TitleBar = Instance.new("Frame")
+    self.TitleBar.Name = "TitleBar"
+    self.TitleBar.Size = UDim2.new(1, 0, 0, 40)
+    self.TitleBar.BackgroundColor3 = NeonColors.Dark
+    self.TitleBar.BorderSizePixel = 0
+    self.TitleBar.Parent = self.MainFrame
+    
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = self.TitleBar
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -10, 1, 0)
+    titleLabel.Position = UDim2.new(0, 5, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title or "NeonRayfield"
+    titleLabel.TextColor3 = NeonColors.Text
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = self.TitleBar
+    
+    -- Draggable
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    self.TitleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.MainFrame.Position
+        end
+    end)
+    self.TitleBar.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            self.MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- Content Frame
+    self.Content = Instance.new("Frame")
+    self.Content.Name = "Content"
+    self.Content.Size = UDim2.new(1, -20, 1, -60)
+    self.Content.Position = UDim2.new(0, 10, 0, 50)
+    self.Content.BackgroundTransparency = 1
+    self.Content.Parent = self.MainFrame
+    
+    self.Tabs = {}
+    self.ActiveTab = nil
+    self.TabFrame = Instance.new("Frame")
+    self.TabFrame.Size = UDim2.new(0, 150, 1, -50)
+    self.TabFrame.Position = UDim2.new(0, 0, 0, 50)
+    self.TabFrame.BackgroundColor3 = NeonColors.Dark
+    self.TabFrame.BorderSizePixel = 0
+    self.TabFrame.Parent = self.MainFrame
+    
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 12)
+    tabCorner.Parent = self.TabFrame
+    
+    -- Tab List
+    self.TabList = Instance.new("ScrollingFrame")
+    self.TabList.Size = UDim2.new(1, 0, 1, 0)
+    self.TabList.BackgroundTransparency = 1
+    self.TabList.BorderSizePixel = 0
+    self.TabList.ScrollBarThickness = 0
+    self.TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    self.TabList.Parent = self.TabFrame
+    
+    -- Initial Animation
+    self.MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    tween(self.MainFrame, {Size = UDim2.new(0, 500, 0, 400)}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    
+    return self
+end
+
+function Window:AddTab(name)
+    local tab = {
+        Name = name,
+        Sections = {},
+        Button = nil,
+        Content = nil
+    }
+    
+    -- Tab Button
+    tab.Button = Instance.new("TextButton")
+    tab.Button.Size = UDim2.new(1, -10, 0, 40)
+    tab.Button.Position = UDim2.new(0, 5, 0, #self.Tabs * 45)
+    tab.Button.BackgroundColor3 = NeonColors.Dark
+    tab.Button.BorderSizePixel = 0
+    tab.Button.Text = name
+    tab.Button.TextColor3 = NeonColors.Muted
+    tab.Button.TextScaled = true
+    tab.Button.Font = Enum.Font.Gotham
+    tab.Button.Parent = self.TabList
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = tab.Button
+    
+    -- Tab Content
+    tab.Content = Instance.new("Frame")
+    tab.Content.Name = name .. "Content"
+    tab.Content.Size = UDim2.new(1, -170, 1, -50)
+    tab.Content.Position = UDim2.new(0, 160, 0, 50)
+    tab.Content.BackgroundTransparency = 1
+    tab.Content.Visible = false
+    tab.Content.Parent = self.MainFrame
+    
+    self.Tabs[name] = tab
+    self.TabList.CanvasSize = UDim2.new(0, 0, 0, (#self.Tabs + 1) * 45)
+    
+    tab.Button.MouseButton1Click:Connect(function()
+        self:SwitchTab(name)
+    end)
+    
+    if not self.ActiveTab then
+        self:SwitchTab(name)
+    end
+    
+    return tab
+end
+
+function Window:SwitchTab(name)
+    if self.ActiveTab then
+        self.Tabs[self.ActiveTab].Content.Visible = false
+        self.Tabs[self.ActiveTab].Button.TextColor3 = NeonColors.Muted
+        tween(self.Tabs[self.ActiveTab].Button, {BackgroundTransparency = 1}, 0.2)
+    end
+    
+    local tab = self.Tabs[name]
+    tab.Content.Visible = true
+    self.ActiveTab = name
+    tab.Button.TextColor3 = NeonColors.Text
+    tween(tab.Button, {BackgroundColor3 = NeonColors.Primary}, 0.2)
+end
+
+-- Section Class
+local Section = {}
+Section.__index = Section
+
+function Window:AddSection(tabName, name)
+    local tab = self.Tabs[tabName]
+    if not tab then return end
+    
+    local section = setmetatable({Name = name, Elements = {}}, Section)
+    
+    local sectionFrame = Instance.new("Frame")
+    sectionFrame.Name = name
+    sectionFrame.Size = UDim2.new(1, -20, 0, 30)
+    sectionFrame.Position = UDim2.new(0, 10, 0, #tab.Sections * 40)
+    sectionFrame.BackgroundTransparency = 1
+    sectionFrame.Parent = tab.Content
+    
+    local sectionLabel = Instance.new("TextLabel")
+    sectionLabel.Size = UDim2.new(1, 0, 1, 0)
+    sectionLabel.BackgroundTransparency = 1
+    sectionLabel.Text = name
+    sectionLabel.TextColor3 = NeonColors.Accent
+    sectionLabel.TextScaled = true
+    sectionLabel.Font = Enum.Font.GothamBold
+    sectionLabel.Parent = sectionFrame
+    
+    -- Line under section
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(1, 0, 0, 1)
+    line.Position = UDim2.new(0, 0, 1, 0)
+    line.BackgroundColor3 = NeonColors.Secondary
+    line.BorderSizePixel = 0
+    line.Parent = sectionFrame
+    
+    tab.Sections[name] = section
+    section.Frame = sectionFrame
+    section.YOffset = #tab.Sections * 40
+    
+    -- Animate in
+    sectionFrame.Size = UDim2.new(0, 0, 0, 0)
+    tween(sectionFrame, {Size = UDim2.new(1, -20, 0, 30)}, 0.3)
+    
+    return section
+end
+
+-- Button
+function Section:CreateButton(text, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, -20, 0, 35)
+    button.Position = UDim2.new(0, 10, 0, #self.Elements * 40 + 10)
+    button.BackgroundColor3 = NeonColors.Primary
+    button.BorderSizePixel = 0
+    button.Text = text
+    button.TextColor3 = NeonColors.Text
+    button.TextScaled = true
+    button.Font = Enum.Font.Gotham
+    button.Parent = self.Frame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = button
+    
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = NeonColors.Accent
+    btnStroke.Thickness = 1
+    btnStroke.Parent = button
+    
+    button.MouseEnter:Connect(function()
+        tween(button, {BackgroundColor3 = NeonColors.Secondary}, 0.2)
+        tween(btnStroke, {Thickness = 2}, 0.2)
+    end)
+    
+    button.MouseLeave:Connect(function()
+        tween(button, {BackgroundColor3 = NeonColors.Primary}, 0.2)
+        tween(btnStroke, {Thickness = 1}, 0.2)
+    end)
+    
+    button.MouseButton1Click:Connect(function()
+        tween(button, {Size = UDim2.new(1, -20, 0, 30)}, 0.1)
+        wait(0.1)
+        tween(button, {Size = UDim2.new(1, -20, 0, 35)}, 0.1)
+        if callback then callback() end
+    end)
+    
+    table.insert(self.Elements, button)
+    return button
+end
+
+-- Toggle
+function Section:CreateToggle(text, default, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Size = UDim2.new(1, -20, 0, 35)
+    toggleFrame.Position = UDim2.new(0, 10, 0, #self.Elements * 40 + 10)
+    toggleFrame.BackgroundTransparency = 1
+    toggleFrame.Parent = self.Frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -50, 1, 0)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = NeonColors.Text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextScaled = true
+    label.Font = Enum.Font.Gotham
+    label.Parent = toggleFrame
+    
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 40, 0, 20)
+    toggle.Position = UDim2.new(1, -50, 0.5, -10)
+    toggle.BackgroundColor3 = NeonColors.Dark
+    toggle.BorderSizePixel = 0
+    toggle.Text = ""
+    toggle.Parent = toggleFrame
+    
+    local togCorner = Instance.new("UICorner")
+    togCorner.CornerRadius = UDim.new(0, 10)
+    togCorner.Parent = toggle
+    
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 18, 0, 18)
+    indicator.Position = UDim2.new(0, 1, 0, 1)
+    indicator.BackgroundColor3 = NeonColors.Muted
+    indicator.BorderSizePixel = 0
+    indicator.Parent = toggle
+    
+    local indCorner = Instance.new("UICorner")
+    indCorner.CornerRadius = UDim.new(0, 9)
+    indCorner.Parent = indicator
+    
+    local state = default or false
+    local function updateToggle()
+        if state then
+            tween(indicator, {BackgroundColor3 = NeonColors.Primary, Position = UDim2.new(1, -19, 0, 1)}, 0.2)
+        else
+            tween(indicator, {BackgroundColor3 = NeonColors.Muted, Position = UDim2.new(0, 1, 0, 1)}, 0.2)
+        end
+        if callback then callback(state) end
+    end
+    
+    toggle.MouseButton1Click:Connect(function()
+        state = not state
+        updateToggle()
+    end)
+    
+    updateToggle()
+    
+    table.insert(self.Elements, toggleFrame)
+    return toggle
+end
+
+-- Slider (Simple, 0-100 for demo)
+function Section:CreateSlider(text, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(1, -20, 0, 50)
+    sliderFrame.Position = UDim2.new(0, 10, 0, #self.Elements * 50 + 10)
+    sliderFrame.BackgroundTransparency = 1
+    sliderFrame.Parent = self.Frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -60, 0, 20)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. (default or min)
+    label.TextColor3 = NeonColors.Text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextScaled = true
+    label.Font = Enum.Font.Gotham
+    label.Parent = sliderFrame
+    
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(1, 0, 0, 4)
+    sliderBar.Position = UDim2.new(0, 0, 1, -5)
+    sliderBar.BackgroundColor3 = NeonColors.Dark
+    sliderBar.BorderSizePixel = 0
+    sliderBar.Parent = sliderFrame
+    
+    local barCorner = Instance.new("UICorner")
+    barCorner.CornerRadius = UDim.new(0, 2)
+    barCorner.Parent = sliderBar
+    
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = NeonColors.Primary
+    fill.BorderSizePixel = 0
+    fill.Parent = sliderBar
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 2)
+    fillCorner.Parent = fill
+    
+    local value = default or min
+    local dragging = false
+    
+    local function updateSlider(input)
+        local relativeX = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+        value = math.floor(min + (max - min) * relativeX)
+        fill.Size = UDim2.new(relativeX, 0, 1, 0)
+        label.Text = text .. ": " .. value
+        if callback then callback(value) end
+    end
+    
+    sliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            updateSlider(input)
+        end
+    end)
+    
+    sliderBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSlider(input)
+        end
+    end)
+    
+    table.insert(self.Elements, sliderFrame)
+    return sliderFrame
+end
+
+-- Global Library Functions
+function Library:CreateWindow(config)
+    return Window.new(config.Title)
+end
+
+-- Example Usage (Remove or comment out in production)
+local window = Library:CreateWindow({Title = "NeonRayfield Demo"})
+local tab = window:AddTab("Main")
+local section = window:AddSection(tab.Name, "Settings")
+
+section:CreateButton("Click Me", function() print("Button clicked!") end)
+section:CreateToggle("Enable Feature", false, function(state) print("Toggle:", state) end)
+section:CreateSlider("Volume", 0, 100, 50, function(value) print("Volume:", value) end)
+
+return Library
